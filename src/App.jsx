@@ -141,6 +141,9 @@ export default function App() {
   const [animalsCaught, setAnimalsCaught] = useState({});
   const [crates, setCrates] = useState(2);
   const [lootboxes, setLootboxes] = useState(2);
+  const [equippedAnimal, setEquippedAnimal] = useState(null);
+  const [shopPageTab, setShopPageTab] = useState(0);
+  const [zooPageTab, setZooPageTab] = useState("common");
 
   // Admin and Cheat Settings
   const [infiniteDurability, setInfiniteDurability] = useState(false);
@@ -208,12 +211,12 @@ export default function App() {
       const userIndex = db.findIndex(u => u.username === currentUser.username);
       if (userIndex !== -1) {
         db[userIndex].state = {
-          cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes
+          cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, equippedAnimal
         };
         saveUserDb(db);
       }
     }
-  }, [cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, currentUser]);
+  }, [cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, equippedAnimal, currentUser]);
 
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -313,7 +316,17 @@ export default function App() {
         }));
 
         const cowoncyEarned = Math.floor(Math.random() * 20) + 15;
-        const expEarned = animal.exp;
+        let bonusXp = 0;
+        if (equippedAnimal) {
+          const rarityLower = equippedAnimal.rarity.toLowerCase();
+          if (rarityLower === "common") bonusXp = 1;
+          else if (rarityLower === "uncommon") bonusXp = 3;
+          else if (rarityLower === "rare") bonusXp = 5;
+          else if (rarityLower === "epic") bonusXp = 10;
+          else if (rarityLower === "mythic") bonusXp = 20;
+          else if (rarityLower === "legendary") bonusXp = 50;
+        }
+        const expEarned = animal.exp + bonusXp;
         setCowoncy(c => c + cowoncyEarned);
         
         // Durability
@@ -343,7 +356,7 @@ export default function App() {
             : `[HUNT] @User pergi berburu dan menangkap seekor ${animal.name} (${animal.rarity})!`,
           {
             title: "Hasil Perburuan",
-            description: `Hewan: ${animal.name} (${animal.rarity})\nHadiah: +${cowoncyEarned} Cowoncy\nExp: +${expEarned * xpMultiplier} XP\n\nSenjata Aktif: ${currentWeapon ? `${currentWeapon.name} (Durability: ${infiniteDurability ? "Infinity" : `${currentWeapon.currentDurability - 1}/${currentWeapon.durability}`})` : "Tanpa Senjata"}`
+            description: `Hewan: ${animal.name} (${animal.rarity})\nHadiah: +${cowoncyEarned} Cowoncy\nExp: +${expEarned * xpMultiplier} XP ${bonusXp > 0 ? `(+${bonusXp} Animal Bonus)` : ""}\n\nSenjata Aktif: ${currentWeapon ? `${currentWeapon.name} (Durability: ${infiniteDurability ? "Infinity" : `${currentWeapon.currentDurability - 1}/${currentWeapon.durability}`})` : "Tanpa Senjata"}`
           }
         );
 
@@ -602,9 +615,10 @@ export default function App() {
         setLevel(user.state.level);
         setInventory(user.state.inventory);
         setActiveWeaponIndex(user.state.activeWeaponIndex);
-        setAnimalsCaught(user.state.animalsCaught);
+        setAnimalsCaught(user.state.animalsCaught || {});
         setCrates(user.state.crates);
         setLootboxes(user.state.lootboxes);
+        setEquippedAnimal(user.state.equippedAnimal || null);
       } else {
         // Reset to default for fresh user
         setCowoncy(1000);
@@ -615,6 +629,7 @@ export default function App() {
         setAnimalsCaught({});
         setCrates(2);
         setLootboxes(2);
+        setEquippedAnimal(null);
       }
 
       setAuthSuccess(`Selamat datang kembali, ${user.username}!`);
@@ -805,9 +820,258 @@ export default function App() {
     setShowGame(false);
   };
 
+  const handleBuyItem = (item) => {
+    if (cowoncy < item.price) {
+      alert(`Saldo Cowoncy Anda tidak cukup! Kurang ${item.price - cowoncy} Cowoncy.`);
+      return;
+    }
+    setCowoncy(c => c - item.price);
+    
+    if (item.id === "crate") {
+      setCrates(c => c + 1);
+    } else if (item.id === "lootbox") {
+      setLootboxes(l => l + 1);
+    } else {
+      setInventory(prev => [
+        ...prev,
+        { ...item, currentDurability: item.durability || 1 }
+      ]);
+    }
+    alert(`Berhasil membeli ${item.name}!`);
+  };
+
+  const getAnimalPassiveDesc = (rarity) => {
+    switch (rarity.toLowerCase()) {
+      case "common": return "+1 EXP per hunt";
+      case "uncommon": return "+3 EXP per hunt";
+      case "rare": return "+5 EXP per hunt";
+      case "epic": return "+10 EXP per hunt";
+      case "mythic": return "+20 EXP per hunt";
+      case "legendary": return "+50 EXP per hunt";
+      default: return "+0 EXP";
+    }
+  };
+
+  const handleEquipAnimal = (animal) => {
+    if (equippedAnimal && equippedAnimal.name === animal.name) {
+      setEquippedAnimal(null);
+      alert(`Berhasil melepaskan ${animal.name} dari tim.`);
+    } else {
+      setEquippedAnimal(animal);
+      alert(`Berhasil memasang ${animal.name} sebagai hewan aktif! Anda mendapatkan bonus passive: ${getAnimalPassiveDesc(animal.rarity)}.`);
+    }
+  };
+
+  const getShopTabs = () => {
+    const t1 = WEAPONS.filter(w => ["Bronze", "Iron", "Steel"].includes(w.tier)).slice(0, 8);
+    const t2 = WEAPONS.filter(w => ["Silver", "Gold"].includes(w.tier)).slice(0, 8);
+    const t3 = WEAPONS.filter(w => ["Emerald", "Diamond"].includes(w.tier)).slice(0, 8);
+    const t4 = WEAPONS.filter(w => ["Obsidian", "Mythic", "Cosmic"].includes(w.tier)).slice(0, 8);
+    const t5 = SHOP_ITEMS.filter(i => !i.dmg).slice(0, 8);
+    const t6 = SHOP_ITEMS.filter(i => !i.dmg).slice(8, 16);
+
+    return [
+      { name: "Weapons I", items: t1 },
+      { name: "Weapons II", items: t2 },
+      { name: "Weapons III", items: t3 },
+      { name: "Weapons IV", items: t4 },
+      { name: "Chests & Crates", items: t5 },
+      { name: "Potions & Buffs", items: t6 }
+    ];
+  };
+
   // Render components based on screen selection (Mobile Tab vs Desktop Layout)
   const renderMobileView = () => {
     switch (mobileTab) {
+      case "shop": {
+        const tabs = getShopTabs();
+        const activeTabObj = tabs[shopPageTab] || tabs[0];
+        return (
+          <div className="chat-area" style={{ overflowY: "auto", padding: "1rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <h2 style={{ color: "#ff3b3b", margin: 0 }}>Toko & Senjata</h2>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", fontSize: "1rem", fontWeight: "700", color: "#ffd60a" }}>
+                <CoinsIcon /> {cowoncy}
+              </div>
+            </div>
+            
+            {/* Shop Sub-tabs */}
+            <div className="shop-tabs-container" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.4rem", marginBottom: "1rem" }}>
+              {tabs.map((tab, idx) => (
+                <button
+                  key={tab.name}
+                  className={`shop-tab-btn ${shopPageTab === idx ? "active" : ""}`}
+                  style={{
+                    padding: "0.6rem 0.2rem",
+                    fontSize: "0.75rem",
+                    fontWeight: "700",
+                    border: "1px solid #701c1c",
+                    borderRadius: "8px",
+                    background: shopPageTab === idx ? "linear-gradient(135deg, #ff3b3b 0%, #a81111 100%)" : "rgba(20, 2, 2, 0.6)",
+                    color: "#fff",
+                    cursor: "pointer"
+                  }}
+                  onClick={() => setShopPageTab(idx)}
+                >
+                  {tab.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Shop Grid (Exactly up to 8 items in 1 page box) */}
+            <div className="shop-items-grid" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+              {activeTabObj.items.map(item => (
+                <div 
+                  key={item.id} 
+                  className="shop-item-row"
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "0.9rem",
+                    background: "rgba(30, 2, 2, 0.5)",
+                    border: "1px solid #3d0d0d",
+                    borderRadius: "12px",
+                    backdropFilter: "blur(10px)"
+                  }}
+                >
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem", textAlign: "left" }}>
+                    <span style={{ fontWeight: "700", color: "#fff", fontSize: "0.95rem" }}>{item.name}</span>
+                    <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+                      <span className={`wiki-rarity rarity-${item.tier}`} style={{ fontSize: "0.65rem", padding: "0.1rem 0.3rem", borderRadius: "3px" }}>
+                        {item.tier}
+                      </span>
+                      {item.dmg && (
+                        <span style={{ fontSize: "0.75rem", color: "#ff8282" }}>
+                          DMG: {item.dmg}
+                        </span>
+                      )}
+                    </div>
+                    {item.description && (
+                      <span style={{ fontSize: "0.75rem", color: "#c9b1b1" }}>
+                        {item.description}
+                      </span>
+                    )}
+                  </div>
+                  <button 
+                    className="btn-primary" 
+                    style={{ padding: "0.5rem 1rem", fontSize: "0.8rem", borderRadius: "8px", flexShrink: 0 }}
+                    onClick={() => handleBuyItem(item)}
+                  >
+                    Beli ({item.price} 🪙)
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      case "team": {
+        const rarities = ["common", "uncommon", "rare", "epic", "mythic", "legendary"];
+        const currentRarityAnimals = ANIMALS[zooPageTab] || ANIMALS.common;
+        return (
+          <div className="chat-area" style={{ overflowY: "auto", padding: "1rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <h2 style={{ color: "#ff3b3b", margin: 0 }}>Tim & Kebun Binatang</h2>
+              {equippedAnimal && (
+                <div style={{ fontSize: "0.8rem", color: "#32d74b", background: "rgba(50, 215, 75, 0.1)", padding: "0.3rem 0.6rem", borderRadius: "6px", border: "1px solid rgba(50, 215, 75, 0.2)" }}>
+                  Aktif: {equippedAnimal.name}
+                </div>
+              )}
+            </div>
+
+            {/* Rarity Tabs */}
+            <div className="shop-tabs-container" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.4rem", marginBottom: "1rem" }}>
+              {rarities.map(rarity => (
+                <button
+                  key={rarity}
+                  className={`shop-tab-btn ${zooPageTab === rarity ? "active" : ""}`}
+                  style={{
+                    padding: "0.6rem 0.2rem",
+                    fontSize: "0.75rem",
+                    fontWeight: "700",
+                    border: "1px solid #701c1c",
+                    borderRadius: "8px",
+                    background: zooPageTab === rarity ? "linear-gradient(135deg, #ff3b3b 0%, #a81111 100%)" : "rgba(20, 2, 2, 0.6)",
+                    color: "#fff",
+                    cursor: "pointer",
+                    textTransform: "capitalize"
+                  }}
+                  onClick={() => setZooPageTab(rarity)}
+                >
+                  {rarity}
+                </button>
+              ))}
+            </div>
+
+            {/* Animal List with Stats on Left, Equip Button on Right */}
+            <div className="shop-items-grid" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+              {currentRarityAnimals.map(ani => {
+                const count = animalsCaught[ani.name] || 0;
+                const isEquipped = equippedAnimal && equippedAnimal.name === ani.name;
+                const passiveDesc = getAnimalPassiveDesc(ani.rarity);
+                return (
+                  <div 
+                    key={ani.name} 
+                    className="shop-item-row"
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "0.9rem",
+                      background: isEquipped ? "rgba(50, 215, 75, 0.08)" : "rgba(30, 2, 2, 0.5)",
+                      border: isEquipped ? "1px solid #32d74b" : "1px solid #3d0d0d",
+                      borderRadius: "12px",
+                      opacity: count > 0 ? 1 : 0.5,
+                      backdropFilter: "blur(10px)"
+                    }}
+                  >
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem", textAlign: "left" }}>
+                      <span style={{ fontWeight: "700", color: "#fff", fontSize: "0.95rem" }}>
+                        <PawIcon /> {ani.name}
+                      </span>
+                      <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+                        <span className={`wiki-rarity rarity-${ani.rarity}`} style={{ fontSize: "0.65rem", padding: "0.1rem 0.3rem", borderRadius: "3px" }}>
+                          {ani.rarity}
+                        </span>
+                        <span style={{ fontSize: "0.75rem", color: "#ffd60a" }}>
+                          Dimiliki: {count}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: "0.75rem", color: "#32d74b", fontWeight: "600" }}>
+                        Boost: {passiveDesc}
+                      </span>
+                    </div>
+
+                    {count > 0 ? (
+                      <button 
+                        className="btn-primary" 
+                        style={{ 
+                          padding: "0.5rem 1rem", 
+                          fontSize: "0.8rem", 
+                          borderRadius: "8px", 
+                          flexShrink: 0,
+                          background: isEquipped ? "linear-gradient(135deg, #30d158 0%, #1c7c35 100%)" : undefined,
+                          borderColor: isEquipped ? "#30d158" : undefined,
+                          boxShadow: isEquipped ? "0 0 15px rgba(48, 209, 88, 0.3)" : undefined
+                        }}
+                        onClick={() => handleEquipAnimal(ani)}
+                      >
+                        {isEquipped ? "Lepas" : "Pasang"}
+                      </button>
+                    ) : (
+                      <span style={{ fontSize: "0.8rem", color: "#8e8e93", paddingRight: "0.5rem", fontWeight: "600" }}>
+                        Locked
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      }
       case "chat":
         return (
           <div className="chat-area">
@@ -817,7 +1081,7 @@ export default function App() {
             
             <div className="message-list">
               {messages.map(msg => (
-                <div className="message-wrapper" key={msg.id}>
+                <div className={`message-wrapper ${msg.isBot ? "bot-response" : "user-response"}`} key={msg.id}>
                   <div className="msg-avatar">{msg.avatar}</div>
                   <div className="msg-content-wrapper">
                     <div className="msg-header">
@@ -1122,10 +1386,18 @@ export default function App() {
         {renderMobileView()}
 
         {/* Mobile Portrait Bottom Navigation Bar */}
-        <nav className="mobile-nav-bar">
+        <nav className="mobile-nav-bar" style={{ display: "grid", gridTemplateColumns: currentUser?.isAdmin ? "repeat(6, 1fr)" : "repeat(5, 1fr)", height: "64px" }}>
           <button className={`mobile-nav-btn ${mobileTab === "chat" ? "active" : ""}`} onClick={() => setMobileTab("chat")}>
             <PawIcon />
             <span>Chat</span>
+          </button>
+          <button className={`mobile-nav-btn ${mobileTab === "shop" ? "active" : ""}`} onClick={() => setMobileTab("shop")}>
+            <ShopIcon />
+            <span>Toko</span>
+          </button>
+          <button className={`mobile-nav-btn ${mobileTab === "team" ? "active" : ""}`} onClick={() => setMobileTab("team")}>
+            <TrophyIcon />
+            <span>Tim</span>
           </button>
           <button className={`mobile-nav-btn ${mobileTab === "wiki" ? "active" : ""}`} onClick={() => setMobileTab("wiki")}>
             <BookIcon />
@@ -1240,7 +1512,7 @@ export default function App() {
               {activeChannel === "owo-commands" && (
                 <>
                   {messages.map(msg => (
-                    <div className="message-wrapper" key={msg.id}>
+                    <div className={`message-wrapper ${msg.isBot ? "bot-response" : "user-response"}`} key={msg.id}>
                       <div className="msg-avatar">{msg.avatar}</div>
                       <div className="msg-content-wrapper">
                         <div className="msg-header">
