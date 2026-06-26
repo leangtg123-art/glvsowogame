@@ -166,7 +166,6 @@ const OnlineDB = {
   },
   async deleteComment(commentId) {
     try {
-      // Find comment by ID to delete
       const res = await fetch(`${DB_URL}/comments.json`);
       const data = await res.json();
       if (data) {
@@ -177,6 +176,28 @@ const OnlineDB = {
       }
     } catch (e) {
       console.error(e);
+    }
+  },
+  async getChatMessages() {
+    try {
+      const res = await fetch(`${DB_URL}/chat.json`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data ? Object.values(data) : [];
+    } catch (e) {
+      console.error("Firebase load chat error:", e);
+      return [];
+    }
+  },
+  async addChatMessage(msgObj) {
+    try {
+      await fetch(`${DB_URL}/chat.json`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(msgObj)
+      });
+    } catch (e) {
+      console.error("Firebase add chat error:", e);
     }
   }
 };
@@ -548,10 +569,15 @@ export default function App() {
     
     syncCloudDb();
     
-    // Fetch comments and leaderboard online initially
+    // Fetch comments, leaderboard and chat messages online initially
     const loadSharedContent = async () => {
       const comms = await OnlineDB.getComments();
       setComments(comms);
+      
+      const chats = await OnlineDB.getChatMessages();
+      if (chats && chats.length > 0) {
+        setMessages(chats);
+      }
       
       const allUsrs = await OnlineDB.getUsers();
       setAllUsers(allUsrs);
@@ -569,24 +595,25 @@ export default function App() {
 
     loadSharedContent();
     
-    // Set interval to poll comments & leaderboard every 10 seconds for real-time feel
-    const interval = setInterval(loadSharedContent, 10000);
+    // Set interval to poll comments & leaderboard & chat every 3 seconds for fast real-time feel
+    const interval = setInterval(loadSharedContent, 3000);
     return () => clearInterval(interval);
   }, [showGame]);
 
   const addMessage = (author, avatar, isBot, body, embed = null) => {
-    setMessages(prev => [
-      ...prev,
-      {
-        id: Math.random().toString(),
-        author,
-        avatar,
-        isBot,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        body,
-        embed
-      }
-    ]);
+    // Generate simplified symbol name for saving to firebase
+    const msgObj = {
+      id: Math.random().toString(),
+      author,
+      avatar: isBot ? "🤖" : "👤",
+      isBot,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      body,
+      embed
+    };
+    
+    setMessages(prev => [...prev, msgObj]);
+    OnlineDB.addChatMessage(msgObj);
   };
 
   const checkLevelUp = (addedExp) => {
@@ -912,6 +939,66 @@ export default function App() {
           }
         );
       }
+      else if (cleanCmd.startsWith("/owo coinflip") || cleanCmd.startsWith("/owo cf")) {
+        const parts = cleanCmd.split(" ");
+        if (parts.length < 4) {
+          addMessage("OwO", <PawIcon />, true, "Format salah! Gunakan: /owo cf [bet_amount] [h/t]");
+          return;
+        }
+        const bet = parseInt(parts[2]);
+        const side = parts[3].toLowerCase();
+        if (isNaN(bet) || bet <= 0) {
+          addMessage("OwO", <PawIcon />, true, "Jumlah taruhan tidak valid.");
+          return;
+        }
+        if (cowoncy < bet) {
+          addMessage("OwO", <PawIcon />, true, "Koin Cowoncy Anda tidak mencukupi.");
+          return;
+        }
+        if (side !== "h" && side !== "t" && side !== "heads" && side !== "tails") {
+          addMessage("OwO", <PawIcon />, true, "Pilih sisi coinflip yang valid: h (heads) atau t (tails).");
+          return;
+        }
+        
+        const roll = Math.random() < 0.5 ? "heads" : "tails";
+        const sideStr = (side === "h" || side === "heads") ? "heads" : "tails";
+        const isWin = roll === sideStr;
+        const reward = isWin ? bet : -bet;
+        setCowoncy(c => c + reward);
+
+        addMessage("OwO", <PawIcon />, true, isWin 
+          ? `[COINFLIP] Koin berputar... Dan mendarat di **${roll}**! Selamat @User menang +${bet} 🪙!` 
+          : `[COINFLIP] Koin berputar... Dan mendarat di **${roll}**! Sayang sekali @User kalah -${bet} 🪙.`
+        );
+      }
+      else if (cleanCmd.startsWith("/owo blackjack") || cleanCmd.startsWith("/owo bj")) {
+        const parts = cleanCmd.split(" ");
+        if (parts.length < 3) {
+          addMessage("OwO", <PawIcon />, true, "Format salah! Gunakan: /owo bj [bet_amount]");
+          return;
+        }
+        const bet = parseInt(parts[2]);
+        if (isNaN(bet) || bet <= 0) {
+          addMessage("OwO", <PawIcon />, true, "Jumlah taruhan tidak valid.");
+          return;
+        }
+        if (cowoncy < bet) {
+          addMessage("OwO", <PawIcon />, true, "Koin Cowoncy Anda tidak mencukupi.");
+          return;
+        }
+
+        const pVal = Math.floor(Math.random() * 10) + 12; // 12-21
+        const dVal = Math.floor(Math.random() * 9) + 13; // 13-21
+        const isWin = pVal <= 21 && (dVal > 21 || pVal > dVal);
+        const isDraw = pVal === dVal;
+        const reward = isWin ? bet : (isDraw ? 0 : -bet);
+        setCowoncy(c => c + reward);
+
+        addMessage("OwO", <PawIcon />, true, isWin 
+          ? `[BLACKJACK] Kartu Anda: **${pVal}** | Kartu Dealer: **${dVal}**. Anda Menang +${bet} 🪙!`
+          : (isDraw ? `[BLACKJACK] Kartu Anda: **${pVal}** | Kartu Dealer: **${dVal}**. Seri (Push)!` : `[BLACKJACK] Kartu Anda: **${pVal}** | Kartu Dealer: **${dVal}**. Anda Kalah -${bet} 🪙.`)
+        );
+      }
       else if (cleanCmd === "/help") {
         addMessage(
           "System",
@@ -920,6 +1007,8 @@ export default function App() {
           "Daftar perintah simulasi yang tersedia:\n" +
           "• /owo hunt - Berburu hewan liar (cooldown 5s)\n" +
           "• /owo battle - Melawan monster liar (cooldown 15s)\n" +
+          "• /owo cf [bet] [h/t] - Coinflip judi koin\n" +
+          "• /owo bj [bet] - Blackjack judi kartu\n" +
           "• /owo inv - Melihat isi ransel dan senjata\n" +
           "• /owo zoo - Menampilkan daftar hewan yang sudah ditangkap\n" +
           "• /owo shop - Membuka toko senjata dan item\n" +
@@ -2461,6 +2550,42 @@ export default function App() {
             <button className="btn-primary" style={{ width: "100%", marginTop: "1.5rem", padding: "0.6rem" }} onClick={() => setInspectingUser(null)}>
               Tutup Inspeksi
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Credit Footer */}
+      <footer style={{ position: "fixed", bottom: isMobile ? "70px" : "10px", right: "20px", fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.4)", zIndex: 100, pointerEvents: "none" }}>
+        Simulated by <span style={{ color: "#ff3b3b", fontWeight: "700" }}>@Littlealean</span>
+      </footer>
+
+      {/* Realtime Phone-style Top Notification Toast */}
+      {caughtAnimalEffect && (
+        <div style={{
+          position: "fixed",
+          top: "20px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: "rgba(15, 2, 2, 0.95)",
+          border: "2px solid #ff3b3b",
+          boxShadow: "0 0 20px rgba(255, 59, 59, 0.6)",
+          borderRadius: "12px",
+          padding: "1rem 1.5rem",
+          zIndex: 100000,
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.8rem",
+          animation: "slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+          maxWidth: "340px",
+          width: "90%",
+          cursor: "pointer"
+        }} onClick={() => setCaughtAnimalEffect(null)}>
+          <span style={{ fontSize: "1.5rem" }}>🐾</span>
+          <div style={{ textAlign: "left" }}>
+            <div style={{ fontSize: "0.75rem", color: "#ff8282", fontWeight: "800", letterSpacing: "0.05em" }}>NOTIFIKASI HEWAN BARU!</div>
+            <div style={{ fontSize: "1.1rem", fontWeight: "900", color: "#fff" }}>{caughtAnimalEffect.name}</div>
+            <div style={{ fontSize: "0.7rem", color: "#30d158" }}>Rarity: {caughtAnimalEffect.rarity} | +{caughtAnimalEffect.exp} XP</div>
           </div>
         </div>
       )}

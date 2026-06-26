@@ -934,3 +934,8 @@
 .animate-splash {
   animation: splashCard 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
+
+@keyframes slideDown {
+  0% { transform: translate(-50%, -100px); opacity: 0; }
+  100% { transform: translate(-50%, 0); opacity: 1; }
+}
