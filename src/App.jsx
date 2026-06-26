@@ -232,7 +232,7 @@ export default function App() {
         true,
         `[LEVEL UP] @User telah naik ke Level ${currentLevel}!`,
         {
-          title: "Level Up! 🌟",
+          title: "Level Up!",
           description: `Selamat! Kamu naik ke level ${currentLevel}.\nBatas Exp baru: ${currentLevel * 150}.\nBonus +500 Cowoncy ditambahkan ke saldo Anda!`
         }
       );
@@ -314,7 +314,7 @@ export default function App() {
             ? `[HUNT] Hebat! Lu dapet ${animal.name} (${animal.rarity})!`
             : `[HUNT] @User pergi berburu dan menangkap seekor ${animal.name} (${animal.rarity})!`,
           {
-            title: "Hasil Perburuan 🌲",
+            title: "Hasil Perburuan",
             description: `Hewan: ${animal.name} (${animal.rarity})\nHadiah: +${cowoncyEarned} Cowoncy\nExp: +${expEarned * xpMultiplier} XP\n\nSenjata Aktif: ${currentWeapon ? `${currentWeapon.name} (Durability: ${infiniteDurability ? "Infinity" : `${currentWeapon.currentDurability - 1}/${currentWeapon.durability}`})` : "Tanpa Senjata"}`
           }
         );
@@ -356,7 +356,7 @@ export default function App() {
             ? `[BATTLE] @User memenangkan pertarungan melawan monster liar!` 
             : `[BATTLE] @User kalah dalam pertarungan melawan monster liar.`,
           {
-            title: isWin ? "Victory! 🏆" : "Defeat! 💀",
+            title: isWin ? "Victory!" : "Defeat!",
             description: `Kekuatan Anda: ${playerRoll.toFixed(1)} DMG\nKekuatan Monster: ${enemyRoll.toFixed(1)} DMG\n\nHasil: ${isWin ? "Menang!" : "Kalah"}\nHadiah: +${cowoncyReward} Cowoncy\nExp: +${expReward * xpMultiplier} XP`
           }
         );
@@ -437,7 +437,7 @@ export default function App() {
           true,
           `[CRATE] @User membuka Animal Crate dan mendapatkan:`,
           {
-            title: `Selamat! 🎉`,
+            title: "Selamat!",
             description: `Kamu mendapatkan ${animal.name} (${animal.rarity}) dari crate!`
           }
         );
@@ -733,7 +733,7 @@ export default function App() {
       desc: "Mengirim pesan siaran pengumuman admin global.",
       action: () => {
         addMessage("Admin Broadcast", <SystemIcon />, true, "PENGUMUMAN SERVER: Pemeliharaan database berkala selesai.", {
-          title: "Status Server: Lancar 🚀",
+          title: "Status Server: Lancar",
           description: "Semua server simulasi berjalan optimal."
         });
       }
@@ -1107,7 +1107,7 @@ export default function App() {
         {/* Column 1: Left Channels Sidebar */}
         <div className="panel-left">
           <div className="panel-header">
-            🏛️ GLVS OWOGAME
+            GLVS OWOGAME
           </div>
           
           <div className="channel-list">

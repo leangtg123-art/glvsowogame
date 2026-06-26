@@ -1,4 +1,5 @@
 /* src/App.css */
+@import url('https://fonts.googleapis.com/css2?family=Humane:wght@300;400;500;600;700;800;900&display=swap');
 
 /* Anime-style Animated Gradient Background */
 @keyframes animeGradient {
@@ -26,18 +27,18 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 1.5rem;
   text-align: center;
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .landing-container::before {
   content: "";
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(rgba(224, 30, 30, 0.05) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(224, 30, 30, 0.05) 1px, transparent 1px);
+  background: linear-gradient(rgba(224, 30, 30, 0.03) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(224, 30, 30, 0.03) 1px, transparent 1px);
   background-size: 30px 30px;
   pointer-events: none;
   z-index: 1;
@@ -45,24 +46,28 @@
 
 .landing-header {
   position: absolute;
-  top: 2rem;
+  top: 1.5rem;
   left: 2rem;
   right: 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   z-index: 10;
+  width: calc(100% - 4rem);
 }
 
 .landing-logo {
-  font-size: 1.8rem;
+  font-family: 'Humane', sans-serif;
+  font-size: 3.2rem;
   font-weight: 900;
   color: #ff3b3b;
-  letter-spacing: -0.05em;
+  letter-spacing: 0.05em;
   text-shadow: 0 0 10px rgba(255, 59, 59, 0.5);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.3rem;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .landing-logo span {
@@ -71,7 +76,7 @@
 
 .landing-hero {
   max-width: 800px;
-  margin-top: 4rem;
+  margin-top: 5rem;
   z-index: 5;
   animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -82,46 +87,53 @@
 }
 
 .landing-title {
-  font-size: clamp(2.2rem, 6vw, 4rem);
+  font-family: 'Humane', sans-serif;
+  font-size: clamp(3.8rem, 12vw, 7.5rem);
   font-weight: 900;
-  line-height: 1.1;
+  line-height: 0.85;
   color: var(--ink-bright);
   text-shadow: 0 4px 15px rgba(0,0,0,0.6);
-  letter-spacing: -0.04em;
-  margin-bottom: 1.5rem;
+  letter-spacing: 0.02em;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
 }
 
 .landing-title span {
   color: #ff3b3b;
-  text-shadow: 0 0 15px rgba(255, 59, 59, 0.4);
+  text-shadow: 0 0 20px rgba(255, 59, 59, 0.6);
 }
 
 .landing-subtitle {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   color: #c9b1b1;
   max-width: 600px;
-  margin: 0 auto 2.5rem auto;
+  margin: 0 auto 2rem auto;
   line-height: 1.5;
 }
 
 /* Auth Section (Login & Register) */
 .auth-panel {
-  background: rgba(18, 2, 2, 0.8);
-  backdrop-filter: blur(12px);
-  border: 1px solid #541414;
+  background: rgba(15, 2, 2, 0.95);
+  backdrop-filter: blur(16px);
+  border: 2px solid #701c1c;
   border-radius: 8px;
-  padding: 2.2rem;
+  padding: 2rem;
   width: 100%;
-  max-width: 420px;
-  margin-top: 2rem;
+  max-width: 400px;
+  margin-top: 1.5rem;
   z-index: 10;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  animation: fadeIn 0.5s ease-out;
+  box-shadow: 0 0 35px rgba(255, 59, 59, 0.25);
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .auth-tabs {
   display: flex;
-  margin-bottom: 1.8rem;
+  margin-bottom: 1.5rem;
   border-bottom: 2px solid #330d0d;
 }
 
@@ -136,11 +148,13 @@
   transition: all 0.2s ease;
   border-bottom: 2px solid transparent;
   margin-bottom: -2px;
+  font-size: 0.95rem;
 }
 
 .auth-tab-btn.active {
   color: #ff3b3b;
   border-bottom-color: #ff3b3b;
+  text-shadow: 0 0 8px rgba(255, 59, 59, 0.5);
 }
 
 .auth-form {
@@ -157,14 +171,15 @@
 }
 
 .form-group label {
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.8rem;
+  font-weight: 800;
   color: #ff3b3b;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .form-input {
-  background-color: #170303;
+  background-color: #120202;
   border: 1px solid #541414;
   border-radius: 4px;
   padding: 0.8rem 1rem;
@@ -176,6 +191,7 @@
 
 .form-input:focus {
   border-color: #ff3b3b;
+  box-shadow: 0 0 10px rgba(255, 59, 59, 0.15);
 }
 
 .auth-error {
@@ -239,6 +255,15 @@
   border-color: #ff3b3b;
 }
 
+.landing-header .btn-secondary {
+  padding: 0.6rem 1.4rem;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  border-color: #701c1c;
+  background-color: rgba(15, 2, 2, 0.8);
+  white-space: nowrap;
+}
+
 /* Landing Features */
 .landing-features {
   display: grid;
@@ -246,7 +271,7 @@
   gap: 2rem;
   width: 100%;
   max-width: 1000px;
-  margin-top: 5rem;
+  margin-top: 4rem;
   z-index: 5;
 }
 
@@ -450,7 +475,6 @@
   flex-shrink: 0;
 }
 
-/* Quick Action Bar for Portrait Mobile */
 .quick-action-bar {
   display: flex;
   gap: 0.5rem;
@@ -579,7 +603,7 @@
   color: #ff3b3b;
 }
 
-/* Admin Dashboard CSS Styles */
+/* Admin Dashboard */
 .admin-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -651,7 +675,6 @@
     display: flex;
   }
 
-  /* Grid of buttons wrapping safely in 2 columns on mobile portrait */
   .quick-action-bar {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -674,4 +697,56 @@
     padding: 1rem;
     gap: 1rem;
   }
+
+  /* Safe stack layout for landing header on small screens */
+  .landing-header {
+    position: static;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+    width: 100%;
+  }
+
+  .landing-logo {
+    font-size: 2.8rem;
+  }
+}
+
+/* Custom styled labels with moving red border accent */
+.rarity-Common { background-color: #292929; color: #dbdee1; }
+.rarity-Uncommon { background-color: #1c3d23; color: #32d74b; }
+.rarity-Rare { background-color: #0f3d5c; color: #0a84ff; }
+.rarity-Epic { background-color: #3e1254; color: #bf5af2; }
+.rarity-Mythic { background-color: #574c0f; color: #ffd60a; }
+.rarity-Legendary { background-color: #54270d; color: #ff9f0a; }
+.rarity-Special { background-color: #540d2d; color: #ff375f; }
+.rarity-Bronze { background-color: #3d1b11; color: #ff9f0a; }
+.rarity-Iron { background-color: #2b2b2b; color: #dbdee1; }
+.rarity-Steel { background-color: #1b2126; color: #64d2ff; }
+.rarity-Silver { background-color: #404040; color: #ffffff; }
+.rarity-Gold { background-color: #4d440f; color: #ffd60a; }
+.rarity-Ruby { background-color: #4a0914; color: #ff3b30; }
+
+.wiki-tab-btn {
+  flex: 1;
+  padding: 0.8rem;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: #c9b1b1;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+}
+
+.wiki-tab-btn.active {
+  background: #140505;
+  color: #ff3b3b;
+  border-bottom-color: #ff3b3b;
+}
+
+.wiki-tab-btn:hover:not(.active) {
+  color: var(--ink-bright);
+  background-color: #140505;
 }
