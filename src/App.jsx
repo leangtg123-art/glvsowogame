@@ -158,6 +158,34 @@ export default function App() {
 
   const messageEndRef = useRef(null);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const totalAnimalsCount = Object.values(animalsCaught).reduce((a, b) => a + b, 0);
+
+  const handleInputChange = (e) => {
+    const val = e.target.value;
+    setInputText(val);
+    if (val.startsWith("/")) {
+      setShowAutocomplete(true);
+    } else {
+      setShowAutocomplete(false);
+    }
+  };
+
+  const handleAutocompleteClick = (cmd) => {
+    setInputText(cmd);
+    setShowAutocomplete(false);
+  };
+
+
   // Load registered users or seed admin
   const getUsersDb = () => {
     const db = localStorage.getItem("owo_users_db");
@@ -987,20 +1015,7 @@ export default function App() {
   if (!showGame) {
     return (
       <div className="landing-container">
-        <header className="landing-header">
-          <div className="landing-logo">
-            <span>GLVS</span> OWOGAME
-          </div>
-          {currentUser ? (
-            <button className="btn-secondary" onClick={() => setShowGame(true)}>
-              Masuk Terminal
-            </button>
-          ) : (
-            <button className="btn-secondary" onClick={() => { setShowAuth(true); setAuthError(""); setAuthSuccess(""); }}>
-              Login / Daftar
-            </button>
-          )}
-        </header>
+
 
         {!showAuth ? (
           <>
@@ -1100,8 +1115,39 @@ export default function App() {
     );
   }
 
+  if (isMobile) {
+    return (
+      <div className="app-root mobile-mode">
+        {/* Render Mobile Portrait Tab View */}
+        {renderMobileView()}
+
+        {/* Mobile Portrait Bottom Navigation Bar */}
+        <nav className="mobile-nav-bar">
+          <button className={`mobile-nav-btn ${mobileTab === "chat" ? "active" : ""}`} onClick={() => setMobileTab("chat")}>
+            <PawIcon />
+            <span>Chat</span>
+          </button>
+          <button className={`mobile-nav-btn ${mobileTab === "wiki" ? "active" : ""}`} onClick={() => setMobileTab("wiki")}>
+            <BookIcon />
+            <span>Wiki</span>
+          </button>
+          <button className={`mobile-nav-btn ${mobileTab === "profile" ? "active" : ""}`} onClick={() => setMobileTab("profile")}>
+            <UserIcon />
+            <span>Profil</span>
+          </button>
+          {currentUser?.isAdmin && (
+            <button className={`mobile-nav-btn ${mobileTab === "admin" ? "active" : ""}`} onClick={() => setMobileTab("admin")}>
+              <KeyIcon />
+              <span>Admin</span>
+            </button>
+          )}
+        </nav>
+      </div>
+    );
+  }
+
   return (
-    <div className="app-root">
+    <div className="app-root desktop-mode">
       {/* desktop UI layout */}
       <div className="app-simulator">
         {/* Column 1: Left Channels Sidebar */}
@@ -1392,31 +1438,6 @@ export default function App() {
           </div>
         </div>
       </div>
-
-      {/* Render Mobile Portrait Tab View */}
-      {renderMobileView()}
-
-      {/* Mobile Portrait Bottom Navigation Bar */}
-      <nav className="mobile-nav-bar">
-        <button className={`mobile-nav-btn ${mobileTab === "chat" ? "active" : ""}`} onClick={() => setMobileTab("chat")}>
-          <PawIcon />
-          <span>Chat</span>
-        </button>
-        <button className={`mobile-nav-btn ${mobileTab === "wiki" ? "active" : ""}`} onClick={() => setMobileTab("wiki")}>
-          <BookIcon />
-          <span>Wiki</span>
-        </button>
-        <button className={`mobile-nav-btn ${mobileTab === "profile" ? "active" : ""}`} onClick={() => setMobileTab("profile")}>
-          <UserIcon />
-          <span>Profil</span>
-        </button>
-        {currentUser?.isAdmin && (
-          <button className={`mobile-nav-btn ${mobileTab === "admin" ? "active" : ""}`} onClick={() => setMobileTab("admin")}>
-            <KeyIcon />
-            <span>Admin</span>
-          </button>
-        )}
-      </nav>
     </div>
   );
 }
