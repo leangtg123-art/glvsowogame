@@ -260,6 +260,9 @@ export default function App() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [caughtAnimalEffect, setCaughtAnimalEffect] = useState(null);
+  const [equippedTitle, setEquippedTitle] = useState("Novice Hunter");
+  const [battlesCount, setBattlesCount] = useState(0);
+  const [inspectingUser, setInspectingUser] = useState(null);
 
   // Admin and Cheat Settings
   const [infiniteDurability, setInfiniteDurability] = useState(false);
@@ -324,7 +327,7 @@ export default function App() {
   useEffect(() => {
     if (currentUser) {
       const stateObj = {
-        cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, equippedAnimal, animalLevels, animalExp
+        cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, equippedAnimal, animalLevels, animalExp, equippedTitle, battlesCount
       };
       
       // 1. Sync to localStorage database
@@ -346,11 +349,72 @@ export default function App() {
         state: stateObj
       });
     }
-  }, [cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, equippedAnimal, animalLevels, animalExp, currentUser]);
+  }, [cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, equippedAnimal, animalLevels, animalExp, equippedTitle, battlesCount, currentUser]);
 
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // --- Title & 50 Achievements Definition ---
+  const TITLES_LIST = [
+    "Novice Hunter", "Amateur Trapper", "Predator", "Beast Master", "Zoo Keeper",
+    "Gacha Addict", "Cowoncy Tycoon", "Crimson Knight", "Dark Summoner", "Kraken Slayer",
+    "Arceus Chosen", "Dragon Rider", "Monster Executioner", "Soul Collector", "Grandmaster",
+    "Apex Ranger", "Golden Hoarder", "Gothic Warlord", "Gladiator", "Obsidian Champion"
+  ];
+
+  const ACHIEVEMENTS_LIST = [
+    { id: 1, name: "First Blood", desc: "Berhasil login pertama kali di game.", condition: (s) => true },
+    { id: 2, name: "Baby Steps", desc: "Mencapai Level 2.", condition: (s) => (s.level >= 2) },
+    { id: 3, name: "Novice Gladiator", desc: "Menang battle sebanyak 5 kali.", condition: (s) => (s.battlesCount >= 5) },
+    { id: 4, name: "Zoo Starter", desc: "Tangkap minimal 5 ekor hewan total.", condition: (s) => (s.totalAnimals >= 5) },
+    { id: 5, name: "Bronze Buyer", desc: "Beli minimal 1 senjata Bronze.", condition: (s) => s.inventory?.some(w => w.tier === "Bronze") },
+    { id: 6, name: "Penny Pincher", desc: "Miliki 2,000 Cowoncy.", condition: (s) => (s.cowoncy >= 2000) },
+    { id: 7, name: "Animal Lover", desc: "Miliki 1 hewan Epic.", condition: (s) => s.animals?.some(a => a.rarity === "Epic") },
+    { id: 8, name: "Iron Will", desc: "Beli minimal 1 senjata Iron.", condition: (s) => s.inventory?.some(w => w.tier === "Iron") },
+    { id: 9, name: "Veteran Hunter", desc: "Mencapai Level 10.", condition: (s) => (s.level >= 10) },
+    { id: 10, name: "Gacha Fanatic", desc: "Buka minimal 10 crates.", condition: (s) => (s.totalAnimals >= 10) },
+    { id: 11, name: "Capitalist", desc: "Miliki 10,000 Cowoncy.", condition: (s) => (s.cowoncy >= 10000) },
+    { id: 12, name: "Elite Battler", desc: "Menang battle sebanyak 25 kali.", condition: (s) => (s.battlesCount >= 25) },
+    { id: 13, name: "Zoo Enthusiast", desc: "Kumpulkan 30 ekor hewan.", condition: (s) => (s.totalAnimals >= 30) },
+    { id: 14, name: "Silver Slasher", desc: "Miliki senjata Silver.", condition: (s) => s.inventory?.some(w => w.tier === "Silver") },
+    { id: 15, name: "Mythical Encounter", desc: "Tangkap minimal 1 hewan Mythic.", condition: (s) => s.animals?.some(a => a.rarity === "Mythic") },
+    { id: 16, name: "Gold Standard", desc: "Miliki senjata Gold.", condition: (s) => s.inventory?.some(w => w.tier === "Gold") },
+    { id: 17, name: "Ascendant", desc: "Mencapai Level 20.", condition: (s) => (s.level >= 20) },
+    { id: 18, name: "Zoo Director", desc: "Kumpulkan 60 ekor hewan.", condition: (s) => (s.totalAnimals >= 60) },
+    { id: 19, name: "Champion Gladiator", desc: "Menang battle 50 kali.", condition: (s) => (s.battlesCount >= 50) },
+    { id: 20, name: "Lord of Legend", desc: "Tangkap minimal 1 hewan Legendary.", condition: (s) => s.animals?.some(a => a.rarity === "Legendary") },
+    { id: 21, name: "Hoarder", desc: "Miliki 25,000 Cowoncy.", condition: (s) => (s.cowoncy >= 25000) },
+    { id: 22, name: "Diamond Hands", desc: "Miliki senjata Diamond.", condition: (s) => s.inventory?.some(w => w.tier === "Diamond") },
+    { id: 23, name: "Animal Whispering", desc: "Dapatkan salah satu hewan setidaknya Level 5.", condition: (s) => Object.values(s.animalLevels || {}).some(lvl => lvl >= 5) },
+    { id: 24, name: "Super Rich", desc: "Miliki 50,000 Cowoncy.", condition: (s) => (s.cowoncy >= 50000) },
+    { id: 25, name: "Overlord", desc: "Mencapai Level 30.", condition: (s) => (s.level >= 30) },
+    { id: 26, name: "Crimson Conqueror", desc: "Kumpulkan 100 ekor hewan.", condition: (s) => (s.totalAnimals >= 100) },
+    { id: 27, name: "Colosseum Star", desc: "Menang battle 100 kali.", condition: (s) => (s.battlesCount >= 100) },
+    { id: 28, name: "Weapon Collector", desc: "Miliki minimal 5 senjata di tas.", condition: (s) => (s.inventory?.length >= 5) },
+    { id: 29, name: "Obsidian Slayer", desc: "Miliki senjata Obsidian.", condition: (s) => s.inventory?.some(w => w.tier === "Obsidian") },
+    { id: 30, name: "Mythic Master", desc: "Miliki 3 hewan Mythic.", condition: (s) => (s.animals?.filter(a => a.rarity === "Mythic").length >= 3) },
+    { id: 31, name: "Half Century", desc: "Mencapai Level 50.", condition: (s) => (s.level >= 50) },
+    { id: 32, name: "Gacha King", desc: "Miliki total 150 ekor hewan.", condition: (s) => (s.totalAnimals >= 150) },
+    { id: 33, name: "God of War", desc: "Menang battle 200 kali.", condition: (s) => (s.battlesCount >= 200) },
+    { id: 34, name: "Cosmic Voyager", desc: "Miliki senjata Cosmic.", condition: (s) => s.inventory?.some(w => w.tier === "Cosmic") },
+    { id: 35, name: "Legendary Trainer", desc: "Miliki 2 hewan Legendary.", condition: (s) => (s.animals?.filter(a => a.rarity === "Legendary").length >= 2) },
+    { id: 36, name: "Zoo Emperor", desc: "Miliki total 200 ekor hewan.", condition: (s) => (s.totalAnimals >= 200) },
+    { id: 37, name: "Immortal", desc: "Mencapai Level 75.", condition: (s) => (s.level >= 75) },
+    { id: 38, name: "Milionare", desc: "Miliki 100,000 Cowoncy.", condition: (s) => (s.cowoncy >= 100000) },
+    { id: 39, name: "Apex Predator", desc: "Dapatkan salah satu hewan aktif Level 10.", condition: (s) => Object.values(s.animalLevels || {}).some(lvl => lvl >= 10) },
+    { id: 40, name: "Unstoppable", desc: "Menang battle 300 kali.", condition: (s) => (s.battlesCount >= 300) },
+    { id: 41, name: "Cosmic Hoarder", desc: "Miliki 3 senjata Cosmic.", condition: (s) => (s.inventory?.filter(w => w.tier === "Cosmic").length >= 3) },
+    { id: 42, name: "Animal Sanctuary", desc: "Miliki 300 ekor hewan.", condition: (s) => (s.totalAnimals >= 300) },
+    { id: 43, name: "Mythic Legend", desc: "Buka minimal 5 hewan Mythic.", condition: (s) => (s.animals?.filter(a => a.rarity === "Mythic").length >= 5) },
+    { id: 44, name: "Centurion", desc: "Mencapai Level 100.", condition: (s) => (s.level >= 100) },
+    { id: 45, name: "Billionaire Dream", desc: "Miliki 500,000 Cowoncy.", condition: (s) => (s.cowoncy >= 500000) },
+    { id: 46, name: "Lord of Arena", desc: "Menang battle 500 kali.", condition: (s) => (s.battlesCount >= 500) },
+    { id: 47, name: "God Breeder", desc: "Dapatkan salah satu hewan Level 20.", condition: (s) => Object.values(s.animalLevels || {}).some(lvl => lvl >= 20) },
+    { id: 48, name: "Divine Collector", desc: "Miliki 5 hewan Legendary.", condition: (s) => (s.animals?.filter(a => a.rarity === "Legendary").length >= 5) },
+    { id: 49, name: "Collector Emperor", desc: "Koleksi minimal 500 ekor hewan.", condition: (s) => (s.totalAnimals >= 500) },
+    { id: 50, name: "Absolute Deity", desc: "Mencapai Level 150 & miliki 1,000,000 Cowoncy.", condition: (s) => (s.level >= 150 && s.cowoncy >= 1000000) }
+  ];
 
   // Cooldown timer loop
   useEffect(() => {
@@ -362,6 +426,101 @@ export default function App() {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Sync state to current logged-in user profile
+  useEffect(() => {
+    if (currentUser) {
+      const stateObj = {
+        cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, equippedAnimal, animalLevels, animalExp, equippedTitle, battlesCount
+      };
+      
+      // 1. Sync to localStorage database
+      const db = getUsersDb();
+      const userIndex = db.findIndex(u => u.username === currentUser.username);
+      if (userIndex !== -1) {
+        db[userIndex].state = stateObj;
+        saveUserDb(db);
+      }
+
+      // 2. Backup to resilient client-side IndexedDB
+      saveLocalBackup(`owo_user_${currentUser.username}`, stateObj);
+      saveLocalBackup("owo_users_db_backup", db);
+
+      // 3. Push and sync online to Firebase Cloud Database
+      OnlineDB.saveUser(currentUser.username, {
+        password: currentUser.password,
+        isAdmin: currentUser.isAdmin || false,
+        state: stateObj
+      });
+    }
+  }, [cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, equippedAnimal, animalLevels, animalExp, equippedTitle, battlesCount, currentUser]);
+
+  const [renameInput, setRenameInput] = useState("");
+  const [renameError, setRenameError] = useState("");
+
+  const handleRenameUser = async () => {
+    setRenameError("");
+    const newName = renameInput.trim();
+    if (!newName) {
+      setRenameError("Nama baru tidak boleh kosong.");
+      return;
+    }
+    if (newName === currentUser.username) {
+      setRenameError("Nama baru harus berbeda dengan nama lama.");
+      return;
+    }
+    if (newName.length < 3 || newName.length > 15) {
+      setRenameError("Panjang username harus antara 3 - 15 karakter.");
+      return;
+    }
+    if (cowoncy < 25000) {
+      setRenameError("Saldo Cowoncy Anda tidak cukup! Butuh 25,000 🪙.");
+      return;
+    }
+
+    const db = getUsersDb();
+    const isExist = db.some(u => u.username.toLowerCase() === newName.toLowerCase());
+    if (isExist) {
+      setRenameError("Username sudah terpakai oleh pemain lain.");
+      return;
+    }
+
+    if (confirm(`Ubah username dari ${currentUser.username} ke ${newName} seharga 25,000 Cowoncy?`)) {
+      const oldUsername = currentUser.username;
+      const updatedUser = {
+        ...currentUser,
+        username: newName,
+        state: {
+          ...currentUser.state,
+          cowoncy: cowoncy - 25000,
+          exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, equippedAnimal, animalLevels, animalExp, equippedTitle, battlesCount
+        }
+      };
+
+      // Update in Local Storage DB list
+      const updatedDb = db.map(u => {
+        if (u.username === oldUsername) {
+          return updatedUser;
+        }
+        return u;
+      });
+      saveUserDb(updatedDb);
+
+      // Remove old user from Cloud & Set new user
+      try {
+        await fetch(`${DB_URL}/users/${oldUsername}.json`, { method: "DELETE" });
+      } catch(e) { console.error(e); }
+
+      await OnlineDB.saveUser(newName, updatedUser);
+      saveLocalBackup(`owo_user_${newName}`, updatedUser.state);
+      saveLocalBackup("owo_users_db_backup", updatedDb);
+
+      setCowoncy(c => c - 25000);
+      setCurrentUser(updatedUser);
+      setRenameInput("");
+      alert("Selamat! Nama berhasil diubah.");
+    }
+  };
 
   // Load/Merge database from Firebase & Local backups when app starts or game loads
   useEffect(() => {
@@ -578,11 +737,13 @@ export default function App() {
         }
 
         setCooldowns(prev => ({ ...prev, battle: 15 }));
+        setBattlesCount(b => b + 1);
 
         const playerWeapon = inventory[activeWeaponIndex];
-        const animalLevelBonus = equippedAnimal ? (animalLevels[equippedAnimal.name] || 1) * 35 : 0;
+        const animalLevelBonus = equippedAnimal ? (animalLevels[equippedAnimal.name] || 1) * 15 : 0;
         const playerPower = (playerWeapon ? playerWeapon.dmg : 5) + animalLevelBonus;
-        const enemyPower = Math.floor(Math.random() * 40) + 15;
+        // Balance: Enemy power scales with player level, making it fair at start and scaling up
+        const enemyPower = Math.floor(Math.random() * (10 + level * 5)) + (5 + level * 2);
 
         const playerRoll = playerPower * (Math.random() * 0.4 + 0.8);
         const enemyRoll = enemyPower * (Math.random() * 0.4 + 0.8);
@@ -826,6 +987,8 @@ export default function App() {
         setEquippedAnimal(user.state.equippedAnimal || null);
         setAnimalLevels(user.state.animalLevels || {});
         setAnimalExp(user.state.animalExp || {});
+        setEquippedTitle(user.state.equippedTitle || "Novice Hunter");
+        setBattlesCount(user.state.battlesCount || 0);
       } else {
         // Reset to default for fresh user
         setCowoncy(1000);
@@ -839,6 +1002,8 @@ export default function App() {
         setEquippedAnimal(null);
         setAnimalLevels({});
         setAnimalExp({});
+        setEquippedTitle("Novice Hunter");
+        setBattlesCount(0);
       }
 
       setAuthSuccess(`Selamat datang kembali, ${user.username}!`);
@@ -1482,9 +1647,14 @@ export default function App() {
             
             {activeWikiTab === "leaderboard" ? (
               <div className="profile-stats" style={{ background: "#0e0202", padding: "1.2rem", borderRadius: "12px", border: "1px solid #330d0d" }}>
-                <div style={{ fontWeight: "800", color: "#ffd60a", marginBottom: "0.8rem", fontSize: "0.95rem" }}>Top 10 Pemain Global</div>
+                <div style={{ fontWeight: "800", color: "#ffd60a", marginBottom: "0.8rem", fontSize: "0.95rem" }}>Top 10 Pemain Global (Klik untuk Inspect)</div>
                 {leaderboard.map((usr, idx) => (
-                  <div key={usr.username} className="stat-row" style={{ borderBottom: "1px solid #330d0d", padding: "0.6rem 0" }}>
+                  <div 
+                    key={usr.username} 
+                    className="stat-row clickable" 
+                    style={{ borderBottom: "1px solid #330d0d", padding: "0.6rem 0", cursor: "pointer" }}
+                    onClick={() => setInspectingUser(usr)}
+                  >
                     <span style={{ color: idx < 3 ? "#ff3b3b" : "#fff", fontWeight: "700" }}>
                       [{idx + 1}] {usr.username} {usr.isAdmin && "👑"}
                     </span>
@@ -1497,14 +1667,26 @@ export default function App() {
             ) : (
               <div className="wiki-list">
                 {activeWikiTab === "animals" ? (
-                  Object.keys(ANIMALS).map(rarity => 
-                    ANIMALS[rarity].map(ani => (
-                      <div className="wiki-item" key={ani.name}>
-                        <span className="wiki-name"><PawIcon /> {ani.name}</span>
-                        <span className={`wiki-rarity rarity-${ani.rarity}`}>{ani.rarity}</span>
-                      </div>
-                    ))
-                  )
+                  <>
+                    <div style={{ padding: "0.5rem", background: "rgba(255, 59, 59, 0.08)", border: "1px solid rgba(255, 59, 59, 0.2)", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.8rem", color: "#c9b1b1", textAlign: "left" }}>
+                      <strong>RNG HUNT RATES (WIKI):</strong><br />
+                      • Common: 50.0%<br />
+                      • Uncommon: 25.0%<br />
+                      • Rare: 15.0%<br />
+                      • Epic: 6.0%<br />
+                      • Mythic: 3.0%<br />
+                      • Legendary: 0.9%<br />
+                      • Special Event: 0.1%
+                    </div>
+                    {Object.keys(ANIMALS).map(rarity => 
+                      ANIMALS[rarity].map(ani => (
+                        <div className="wiki-item" key={ani.name}>
+                          <span className="wiki-name"><PawIcon /> {ani.name}</span>
+                          <span className={`wiki-rarity rarity-${ani.rarity}`}>{ani.rarity}</span>
+                        </div>
+                      ))
+                    )}
+                  </>
                 ) : (
                   WEAPONS.map(w => (
                     <div className="wiki-item" key={w.id} style={{flexDirection: "column", alignItems: "flex-start", gap: "0.2rem"}}>
@@ -1533,6 +1715,18 @@ export default function App() {
                 <span className="stat-val">{currentUser ? currentUser.username : "Player123"}</span>
               </div>
               <div className="stat-row">
+                <span className="stat-lbl">Gelar (Title):</span>
+                <select 
+                  value={equippedTitle} 
+                  onChange={(e) => setEquippedTitle(e.target.value)}
+                  style={{ background: "#1c0505", border: "1px solid #541414", color: "#fff", padding: "0.2rem", borderRadius: "4px" }}
+                >
+                  {TITLES_LIST.map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="stat-row">
                 <span className="stat-lbl">Level:</span>
                 <span className="stat-val">{level}</span>
               </div>
@@ -1557,9 +1751,78 @@ export default function App() {
                   {inventory[activeWeaponIndex] ? inventory[activeWeaponIndex].name : "None"}
                 </span>
               </div>
+              
+              {/* Change Username Input Form */}
+              <div style={{ marginTop: "1.5rem", borderTop: "1px solid #330d0d", paddingTop: "1rem", textAlign: "left" }}>
+                <span style={{ fontSize: "0.85rem", color: "#ffd60a", fontWeight: "700" }}>GANTI USERNAME (Biaya: 25,000 🪙)</span>
+                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+                  <input
+                    type="text"
+                    className="form-input"
+                    style={{ flexGrow: 1, padding: "0.5rem", fontSize: "0.85rem" }}
+                    placeholder="Username baru..."
+                    value={renameInput}
+                    onChange={(e) => setRenameInput(e.target.value)}
+                  />
+                  <button className="btn-primary" style={{ padding: "0.5rem 1rem", fontSize: "0.85rem" }} onClick={handleRenameUser}>
+                    Ubah
+                  </button>
+                </div>
+                {renameError && <div style={{ color: "#ff453a", fontSize: "0.75rem", marginTop: "0.3rem" }}>{renameError}</div>}
+              </div>
+
               <button className="btn-secondary" style={{ marginTop: "1.5rem", width: "100%" }} onClick={handleLogout}>
                 Keluar Sesi
               </button>
+            </div>
+
+            {/* Achievements List Display */}
+            <div style={{ marginTop: "2rem", textAlign: "left" }}>
+              <h3 style={{ color: "#ff3b3b", fontSize: "1.2rem", borderBottom: "1px solid #330d0d", paddingBottom: "0.5rem", marginBottom: "1rem" }}>
+                Pencapaian & Achievements (50 Tantangan)
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", maxHeight: "300px", overflowY: "auto", paddingRight: "0.3rem" }}>
+                {ACHIEVEMENTS_LIST.map(ach => {
+                  const unlocked = ach.condition({
+                    level,
+                    battlesCount,
+                    cowoncy,
+                    totalAnimals: totalAnimalsCount,
+                    inventory,
+                    animals: Object.keys(animalsCaught).map(name => {
+                      const matchRarities = Object.keys(ANIMALS).find(rar => ANIMALS[rar].some(a => a.name === name));
+                      return { name, rarity: matchRarities };
+                    }),
+                    animalLevels
+                  });
+                  return (
+                    <div 
+                      key={ach.id} 
+                      style={{
+                        background: unlocked ? "rgba(48, 209, 88, 0.08)" : "rgba(30, 2, 2, 0.4)",
+                        border: unlocked ? "1px solid #30d158" : "1px solid #3d0d0d",
+                        borderRadius: "8px",
+                        padding: "0.8rem",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center"
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: "700", color: unlocked ? "#30d158" : "#fff", fontSize: "0.85rem" }}>
+                          {ach.name}
+                        </div>
+                        <div style={{ fontSize: "0.75rem", color: "#c9b1b1", marginTop: "0.1rem" }}>
+                          {ach.desc}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: "0.75rem", fontWeight: "700", color: unlocked ? "#30d158" : "#8e8e93" }}>
+                        {unlocked ? "TERBUKA" : "TERKUNCI"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         );
@@ -1677,6 +1940,11 @@ export default function App() {
           </>
         ) : (
           <div className="auth-panel gothic-login">
+            {/* Warning Banner */}
+            <div style={{ background: "rgba(255, 59, 58, 0.15)", border: "1px solid #ff453a", borderRadius: "10px", padding: "0.8rem", marginBottom: "1.2rem", fontSize: "0.8rem", color: "#ff453a", textAlign: "left", lineHeight: "1.4" }}>
+              <strong>⚠️ PERINGATAN KEAMANAN:</strong><br />
+              Jangan gunakan password / kata sandi atau data akun asli Anda yang sama dengan platform Discord / game lainnya. Akun ini hanya untuk game simulator web.
+            </div>
             <div className="auth-anime-logo">
               <div className="auth-brand">GLVS // RUN</div>
               <div className="auth-sub-brand">OwO Bot Gothic Crimson Simulator</div>
@@ -1937,21 +2205,22 @@ export default function App() {
 
               {activeChannel === "leaderboard" && (
                 <div style={{color: "var(--ink-regular)", padding: "1rem"}}>
-                  <h2>Papan Peringkat Global</h2>
+                  <h2>Papan Peringkat Global (Klik Pemain untuk Inspect)</h2>
                   <br />
-                  <div className="profile-stats" style={{maxWidth: "400px"}}>
-                    <div className="stat-row" style={{borderBottom: "1px solid #330d0d", padding: "0.6rem 0"}}>
-                      <span>[1] owo_king</span>
-                      <span>Lv. 92 (1,490,200)</span>
-                    </div>
-                    <div className="stat-row" style={{borderBottom: "1px solid #330d0d", padding: "0.6rem 0"}}>
-                      <span>[2] gacha_lord</span>
-                      <span>Lv. 78 (920,500)</span>
-                    </div>
-                    <div className="stat-row" style={{borderBottom: "1px solid #330d0d", padding: "0.6rem 0"}}>
-                      <span>[3] Anda (Player123)</span>
-                      <span>Lv. {level} ({cowoncy})</span>
-                    </div>
+                  <div className="profile-stats" style={{maxWidth: "500px"}}>
+                    {leaderboard.map((usr, idx) => (
+                      <div 
+                        key={usr.username} 
+                        className="stat-row clickable" 
+                        style={{borderBottom: "1px solid #330d0d", padding: "0.6rem 0", cursor: "pointer"}}
+                        onClick={() => setInspectingUser(usr)}
+                      >
+                        <span style={{ color: idx < 3 ? "#ff3b3b" : "#fff", fontWeight: "700" }}>
+                          [{idx + 1}] {usr.username} {usr.isAdmin && "👑"}
+                        </span>
+                        <span>Lv. {usr.state?.level || 1} ({usr.state?.cowoncy || 0} 🪙)</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -2020,6 +2289,10 @@ export default function App() {
             <div className="right-section-title">Profil Anda</div>
             <div className="profile-stats">
               <div className="stat-row">
+                <span className="stat-lbl">Gelar:</span>
+                <span className="stat-val" style={{ color: "#ffd60a", fontWeight: "700" }}>{equippedTitle}</span>
+              </div>
+              <div className="stat-row">
                 <span className="stat-lbl">Level:</span>
                 <span className="stat-val">{level}</span>
               </div>
@@ -2065,6 +2338,16 @@ export default function App() {
           <div style={{padding: "1rem"}}>
             {activeWikiTab === "animals" ? (
               <div className="wiki-list">
+                <div style={{ padding: "0.5rem", background: "rgba(255, 59, 59, 0.08)", border: "1px solid rgba(255, 59, 59, 0.2)", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.8rem", color: "#c9b1b1", textAlign: "left" }}>
+                  <strong>RNG HUNT RATES (WIKI):</strong><br />
+                  • Common: 50.0%<br />
+                  • Uncommon: 25.0%<br />
+                  • Rare: 15.0%<br />
+                  • Epic: 6.0%<br />
+                  • Mythic: 3.0%<br />
+                  • Legendary: 0.9%<br />
+                  • Special Event: 0.1%
+                </div>
                 {Object.keys(ANIMALS).map(rarity => 
                   ANIMALS[rarity].map(ani => (
                     <div className="wiki-item" key={ani.name}>
@@ -2111,6 +2394,70 @@ export default function App() {
               Nilai EXP: +{caughtAnimalEffect.exp} XP
             </div>
             <p className="caught-tip">Klik di mana saja untuk menutup</p>
+          </div>
+        </div>
+      )}
+
+      {/* Inspect Profile Overlay Modal */}
+      {inspectingUser && (
+        <div className="caught-overlay-container" onClick={() => setInspectingUser(null)}>
+          <div className="caught-card-body gothic-card glow-crimson animate-splash" style={{ maxWidth: "420px", textAlign: "left" }} onClick={(e) => e.stopPropagation()}>
+            <h3 className="caught-sub" style={{ textAlign: "center", borderBottom: "1px solid #541414", paddingBottom: "0.5rem" }}>INSPEKSI PLAYER</h3>
+            
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginTop: "1rem" }}>
+              <div>
+                <strong style={{ color: "#ff3b3b" }}>Username:</strong> <span style={{ color: "#fff", fontWeight: "700" }}>{inspectingUser.username}</span>
+              </div>
+              <div>
+                <strong style={{ color: "#ff3b3b" }}>Gelar:</strong> <span style={{ color: "#ffd60a", fontWeight: "700" }}>{inspectingUser.state?.equippedTitle || "Novice Hunter"}</span>
+              </div>
+              <div>
+                <strong style={{ color: "#ff3b3b" }}>Level Pemain:</strong> <span style={{ color: "#fff" }}>{inspectingUser.state?.level || 1}</span>
+              </div>
+              <div>
+                <strong style={{ color: "#ff3b3b" }}>Koin Cowoncy:</strong> <span style={{ color: "#ffd60a" }}>{inspectingUser.state?.cowoncy || 0} 🪙</span>
+              </div>
+              <div>
+                <strong style={{ color: "#ff3b3b" }}>Peti Gacha (Crates):</strong> <span style={{ color: "#fff" }}>{inspectingUser.state?.crates || 0}</span>
+              </div>
+              <div>
+                <strong style={{ color: "#ff3b3b" }}>Hewan Aktif:</strong> <span style={{ color: "#32d74b" }}>{inspectingUser.state?.equippedAnimal?.name ? `${inspectingUser.state.equippedAnimal.emoji} ${inspectingUser.state.equippedAnimal.name} (${inspectingUser.state.equippedAnimal.rarity})` : "None"}</span>
+              </div>
+              
+              <div style={{ borderTop: "1px solid #541414", paddingTop: "0.8rem", marginTop: "0.5rem" }}>
+                <strong style={{ color: "#ff3b3b", fontSize: "0.85rem" }}>DAFTAR HEWAN TERBAIK (ZOO):</strong>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginTop: "0.4rem", maxHeight: "100px", overflowY: "auto" }}>
+                  {inspectingUser.state?.animalsCaught && Object.keys(inspectingUser.state.animalsCaught).length > 0 ? (
+                    Object.keys(inspectingUser.state.animalsCaught).map(aniName => (
+                      <span key={aniName} style={{ background: "rgba(255, 59, 59, 0.15)", padding: "0.2rem 0.5rem", borderRadius: "4px", fontSize: "0.75rem", border: "1px solid rgba(255, 59, 59, 0.3)" }}>
+                        {aniName} (x{inspectingUser.state.animalsCaught[aniName]})
+                      </span>
+                    ))
+                  ) : (
+                    <span style={{ fontSize: "0.75rem", color: "#8e8e93" }}>Belum mengoleksi hewan.</span>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ borderTop: "1px solid #541414", paddingTop: "0.8rem" }}>
+                <strong style={{ color: "#ff3b3b", fontSize: "0.85rem" }}>SENJATA DI TAS:</strong>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginTop: "0.4rem", maxHeight: "100px", overflowY: "auto" }}>
+                  {inspectingUser.state?.inventory && inspectingUser.state.inventory.length > 0 ? (
+                    inspectingUser.state.inventory.map((w, idx) => (
+                      <span key={idx} style={{ background: "rgba(255, 255, 255, 0.05)", padding: "0.2rem 0.5rem", borderRadius: "4px", fontSize: "0.75rem", border: "1px solid rgba(255, 255, 255, 0.15)" }}>
+                        {w.name} (DMG: {w.dmg})
+                      </span>
+                    ))
+                  ) : (
+                    <span style={{ fontSize: "0.75rem", color: "#8e8e93" }}>Tas kosong.</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <button className="btn-primary" style={{ width: "100%", marginTop: "1.5rem", padding: "0.6rem" }} onClick={() => setInspectingUser(null)}>
+              Tutup Inspeksi
+            </button>
           </div>
         </div>
       )}
