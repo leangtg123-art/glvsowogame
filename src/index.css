@@ -1,0 +1,74 @@
+/* src/index.css */
+
+:root {
+  --bg-dark: oklch(0.12 0.01 250);
+  --bg-chat: oklch(0.17 0.01 250);
+  --bg-panel: oklch(0.14 0.01 250);
+  --bg-input: oklch(0.20 0.01 250);
+  --bg-hover: oklch(0.25 0.01 250);
+  
+  --blurple: oklch(0.58 0.22 268);
+  --blurple-hover: oklch(0.52 0.22 268);
+  --green: oklch(0.68 0.18 142);
+  --yellow: oklch(0.80 0.16 85);
+  --red: oklch(0.55 0.20 25);
+  
+  --ink-bright: oklch(0.98 0.01 250);
+  --ink-regular: oklch(0.85 0.01 250);
+  --ink-muted: oklch(0.65 0.01 250);
+  --border: oklch(0.22 0.01 250);
+  
+  --font-family: "gg sans", "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Courier, monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--ink-regular);
+  font-family: var(--font-family);
+  font-size: 15px;
+  line-height: 1.4;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--blurple);
+  text-decoration: none;
+  transition: color 0.15s ease-out;
+}
+
+a:hover {
+  color: var(--blurple-hover);
+  text-decoration: underline;
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-panel);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border);
+}
