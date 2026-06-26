@@ -199,6 +199,28 @@ const OnlineDB = {
     } catch (e) {
       console.error("Firebase add chat error:", e);
     }
+  },
+  async getVisitors() {
+    try {
+      const res = await fetch(`${DB_URL}/visitors.json`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data ? Object.values(data).reverse() : [];
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  },
+  async recordVisitor(visitorObj) {
+    try {
+      await fetch(`${DB_URL}/visitors.json`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(visitorObj)
+      });
+    } catch (e) {
+      console.error(e);
+    }
   }
 };
 
@@ -284,6 +306,7 @@ export default function App() {
   const [equippedTitle, setEquippedTitle] = useState("Novice Hunter");
   const [battlesCount, setBattlesCount] = useState(0);
   const [inspectingUser, setInspectingUser] = useState(null);
+  const [visitors, setVisitors] = useState([]);
 
   // Admin and Cheat Settings
   const [infiniteDurability, setInfiniteDurability] = useState(false);
@@ -543,6 +566,20 @@ export default function App() {
     }
   };
 
+  // Record visitor immediately when landing container is loaded (first entry)
+  useEffect(() => {
+    const recordNewVisit = async () => {
+      const visitorObj = {
+        time: new Date().toLocaleString(),
+        ua: navigator.userAgent,
+        platform: navigator.platform,
+        language: navigator.language
+      };
+      await OnlineDB.recordVisitor(visitorObj);
+    };
+    recordNewVisit();
+  }, []);
+
   // Load/Merge database from Firebase & Local backups when app starts or game loads
   useEffect(() => {
     const syncCloudDb = async () => {
@@ -569,7 +606,7 @@ export default function App() {
     
     syncCloudDb();
     
-    // Fetch comments, leaderboard and chat messages online initially
+    // Fetch comments, leaderboard, chat messages and visitors online initially
     const loadSharedContent = async () => {
       const comms = await OnlineDB.getComments();
       setComments(comms);
@@ -577,6 +614,11 @@ export default function App() {
       const chats = await OnlineDB.getChatMessages();
       if (chats && chats.length > 0) {
         setMessages(chats);
+      }
+
+      const vists = await OnlineDB.getVisitors();
+      if (vists && vists.length > 0) {
+        setVisitors(vists);
       }
       
       const allUsrs = await OnlineDB.getUsers();
@@ -1964,6 +2006,36 @@ export default function App() {
                         </div>
                         <div style={{ fontSize: "0.75rem", color: "#8e8e93", marginTop: "0.2rem" }}>
                           Hewan Aktif: {usr.state?.equippedAnimal?.name || "None"}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Visitor Tracker Logs */}
+                <div style={{ marginTop: "2rem", borderTop: "1px solid #330d0d", paddingTop: "1.5rem", textAlign: "left" }}>
+                  <h3 style={{ color: "#ff3b3b", marginBottom: "0.8rem", fontSize: "1.1rem" }}>
+                    Log Pengunjung Web Realtime ({visitors.length} Kunjungan)
+                  </h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", maxHeight: "250px", overflowY: "auto", paddingRight: "0.3rem" }}>
+                    {visitors.map((v, index) => (
+                      <div 
+                        key={index}
+                        style={{
+                          background: "rgba(30, 2, 2, 0.5)",
+                          border: "1px solid #330d0d",
+                          padding: "0.8rem",
+                          borderRadius: "8px",
+                          fontSize: "0.75rem"
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", color: "#ffd60a", fontWeight: "700", marginBottom: "0.2rem" }}>
+                          <span>Pengunjung #{visitors.length - index}</span>
+                          <span style={{ color: "#8e8e93" }}>{v.time}</span>
+                        </div>
+                        <div style={{ color: "#c9b1b1", wordBreak: "break-all" }}>
+                          UA: {v.ua}<br />
+                          Platform: {v.platform} | Lang: {v.language}
                         </div>
                       </div>
                     ))}
