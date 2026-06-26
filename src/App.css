@@ -797,3 +797,140 @@
   color: #c7c7cc;
   background-color: rgba(30, 30, 30, 0.5);
 }
+
+/* Gothic Crimson Redesigned Login panel */
+.gothic-login {
+  border: 1px solid #9e0e0e;
+  box-shadow: 0 0 40px rgba(255, 59, 59, 0.35);
+  background: radial-gradient(circle at top, rgba(40, 2, 2, 0.95) 0%, rgba(10, 1, 1, 0.98) 100%);
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+}
+
+.auth-anime-logo {
+  text-align: center;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.auth-brand {
+  font-family: 'Humane', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: #ff3b3b;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 15px rgba(255, 59, 59, 0.6);
+  line-height: 1;
+}
+
+.auth-sub-brand {
+  font-size: 0.8rem;
+  color: #c9b1b1;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.auth-gasp-accent {
+  width: 60px;
+  height: 3px;
+  background-color: #ff3b3b;
+  margin: 0.8rem auto 0 auto;
+  box-shadow: 0 0 8px #ff3b3b;
+}
+
+.auth-submit-btn {
+  background: linear-gradient(135deg, #ff3b3b 0%, #700707 100%) !important;
+  border-color: #ff6b6b !important;
+  border-radius: 14px !important;
+}
+
+.auth-back-btn {
+  background-color: transparent !important;
+  border: 1px solid rgba(255, 59, 59, 0.25) !important;
+  border-radius: 14px !important;
+}
+
+.auth-back-btn:hover {
+  background-color: rgba(255, 59, 59, 0.1) !important;
+  border-color: #ff3b3b !important;
+}
+
+/* Caught Splash Overlay Card */
+.caught-overlay-container {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(10px);
+}
+
+.caught-card-body {
+  width: 90%;
+  max-width: 360px;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: radial-gradient(circle, #210202 0%, #080000 100%);
+  border: 2px solid #ff3b3b;
+  border-radius: 24px;
+  box-shadow: 0 0 35px rgba(255, 59, 59, 0.6);
+  position: relative;
+  overflow: hidden;
+}
+
+.caught-sub {
+  font-size: 0.9rem;
+  color: #ff6b6b;
+  letter-spacing: 0.15em;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+}
+
+.caught-gasp {
+  font-family: 'Humane', sans-serif;
+  font-size: 4.8rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.caught-badge {
+  display: inline-block;
+  padding: 0.4rem 1.2rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  border-radius: 20px;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.05em;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.caught-stats {
+  font-size: 0.95rem;
+  color: #32d74b;
+  font-weight: 700;
+  margin-bottom: 2rem;
+}
+
+.caught-tip {
+  font-size: 0.75rem;
+  color: #8e8e93;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Animations */
+@keyframes splashCard {
+  0% { transform: scale(0.7) rotate(-3deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.animate-splash {
+  animation: splashCard 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}

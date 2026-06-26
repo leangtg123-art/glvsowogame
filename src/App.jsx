@@ -116,6 +116,115 @@ const KeyIcon = () => (
   </svg>
 );
 
+// --- Online Realtime Database (Firebase REST API) ---
+const DB_URL = "https://glvsowogame-default-rtdb.asia-southeast1.firebasedatabase.app";
+
+const OnlineDB = {
+  async getUsers() {
+    try {
+      const res = await fetch(`${DB_URL}/users.json`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data ? Object.values(data) : [];
+    } catch (e) {
+      console.error("Firebase load users error:", e);
+      return [];
+    }
+  },
+  async saveUser(username, userData) {
+    try {
+      await fetch(`${DB_URL}/users/${username}.json`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, ...userData })
+      });
+    } catch (e) {
+      console.error("Firebase save user error:", e);
+    }
+  },
+  async getComments() {
+    try {
+      const res = await fetch(`${DB_URL}/comments.json`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data ? Object.values(data).reverse() : [];
+    } catch (e) {
+      console.error("Firebase load comments error:", e);
+      return [];
+    }
+  },
+  async addComment(commentObj) {
+    try {
+      await fetch(`${DB_URL}/comments.json`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(commentObj)
+      });
+    } catch (e) {
+      console.error("Firebase add comment error:", e);
+    }
+  },
+  async deleteComment(commentId) {
+    try {
+      // Find comment by ID to delete
+      const res = await fetch(`${DB_URL}/comments.json`);
+      const data = await res.json();
+      if (data) {
+        const key = Object.keys(data).find(k => data[k].id === commentId);
+        if (key) {
+          await fetch(`${DB_URL}/comments/${key}.json`, { method: "DELETE" });
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+};
+
+// --- Resilient IndexedDB Backup Storage ---
+const initIndexedDB = () => {
+  return new Promise((resolve) => {
+    const request = indexedDB.open("GLVSOwoDB", 1);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains("state")) {
+        db.createObjectStore("state", { keyPath: "key" });
+      }
+    };
+    request.onsuccess = (e) => resolve(e.target.result);
+    request.onerror = () => resolve(null);
+  });
+};
+
+const saveLocalBackup = async (key, val) => {
+  try {
+    const db = await initIndexedDB();
+    if (!db) return;
+    const tx = db.transaction("state", "readwrite");
+    const store = tx.objectStore("state");
+    store.put({ key, value: val });
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+const getLocalBackup = async (key) => {
+  try {
+    const db = await initIndexedDB();
+    if (!db) return null;
+    return new Promise((resolve) => {
+      const tx = db.transaction("state", "readonly");
+      const store = tx.objectStore("state");
+      const req = store.get(key);
+      req.onsuccess = () => resolve(req.result ? req.result.value : null);
+      req.onerror = () => resolve(null);
+    });
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+};
+
 export default function App() {
   // Navigation & Auth Mode
   const [showGame, setShowGame] = useState(false);
@@ -144,6 +253,13 @@ export default function App() {
   const [equippedAnimal, setEquippedAnimal] = useState(null);
   const [shopPageTab, setShopPageTab] = useState(0);
   const [zooPageTab, setZooPageTab] = useState("common");
+  const [animalLevels, setAnimalLevels] = useState({});
+  const [animalExp, setAnimalExp] = useState({});
+  const [comments, setComments] = useState([]);
+  const [newCommentText, setNewCommentText] = useState("");
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [caughtAnimalEffect, setCaughtAnimalEffect] = useState(null);
 
   // Admin and Cheat Settings
   const [infiniteDurability, setInfiniteDurability] = useState(false);
@@ -207,16 +323,30 @@ export default function App() {
   // Sync state to current logged-in user profile
   useEffect(() => {
     if (currentUser) {
+      const stateObj = {
+        cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, equippedAnimal, animalLevels, animalExp
+      };
+      
+      // 1. Sync to localStorage database
       const db = getUsersDb();
       const userIndex = db.findIndex(u => u.username === currentUser.username);
       if (userIndex !== -1) {
-        db[userIndex].state = {
-          cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, equippedAnimal
-        };
+        db[userIndex].state = stateObj;
         saveUserDb(db);
       }
+
+      // 2. Backup to resilient client-side IndexedDB
+      saveLocalBackup(`owo_user_${currentUser.username}`, stateObj);
+      saveLocalBackup("owo_users_db_backup", db);
+
+      // 3. Push and sync online to Firebase Cloud Database
+      OnlineDB.saveUser(currentUser.username, {
+        password: currentUser.password,
+        isAdmin: currentUser.isAdmin || false,
+        state: stateObj
+      });
     }
-  }, [cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, equippedAnimal, currentUser]);
+  }, [cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, equippedAnimal, animalLevels, animalExp, currentUser]);
 
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -232,6 +362,58 @@ export default function App() {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Load/Merge database from Firebase & Local backups when app starts or game loads
+  useEffect(() => {
+    const syncCloudDb = async () => {
+      // 1. Fetch from Firebase
+      const cloudUsers = await OnlineDB.getUsers();
+      
+      // 2. Fetch from local backups
+      const localDb = getUsersDb();
+      
+      // Merge users
+      const mergedDb = [...localDb];
+      cloudUsers.forEach(cu => {
+        const matchIdx = mergedDb.findIndex(u => u.username === cu.username);
+        if (matchIdx !== -1) {
+          mergedDb[matchIdx] = cu;
+        } else {
+          mergedDb.push(cu);
+        }
+      });
+      
+      saveUserDb(mergedDb);
+      saveLocalBackup("owo_users_db_backup", mergedDb);
+    };
+    
+    syncCloudDb();
+    
+    // Fetch comments and leaderboard online initially
+    const loadSharedContent = async () => {
+      const comms = await OnlineDB.getComments();
+      setComments(comms);
+      
+      const allUsrs = await OnlineDB.getUsers();
+      setAllUsers(allUsrs);
+      // Sort users by level (descending) and cowoncy (descending) to build a global leaderboard
+      const sortedLeaderboard = [...allUsrs].sort((a, b) => {
+        const lvlA = a.state?.level || 1;
+        const lvlB = b.state?.level || 1;
+        if (lvlB !== lvlA) return lvlB - lvlA;
+        const cowA = a.state?.cowoncy || 0;
+        const cowB = b.state?.cowoncy || 0;
+        return cowB - cowA;
+      }).slice(0, 10);
+      setLeaderboard(sortedLeaderboard);
+    };
+
+    loadSharedContent();
+    
+    // Set interval to poll comments & leaderboard every 10 seconds for real-time feel
+    const interval = setInterval(loadSharedContent, 10000);
+    return () => clearInterval(interval);
+  }, [showGame]);
 
   const addMessage = (author, avatar, isBot, body, embed = null) => {
     setMessages(prev => [
@@ -329,6 +511,28 @@ export default function App() {
         const expEarned = animal.exp + bonusXp;
         setCowoncy(c => c + cowoncyEarned);
         
+        // Trigger Special Caught Visual Overlay Effect
+        setCaughtAnimalEffect({
+          name: animal.name,
+          rarity: animal.rarity,
+          exp: animal.exp
+        });
+
+        // Add leveling progress to the equipped animal
+        if (equippedAnimal) {
+          const eqName = equippedAnimal.name;
+          const currentLvl = animalLevels[eqName] || 1;
+          const currentXp = (animalExp[eqName] || 0) + 15;
+          const xpNeeded = currentLvl * 100;
+          if (currentXp >= xpNeeded) {
+            setAnimalLevels(prev => ({ ...prev, [eqName]: currentLvl + 1 }));
+            setAnimalExp(prev => ({ ...prev, [eqName]: currentXp - xpNeeded }));
+            addMessage("System", <SystemIcon />, false, `🐾 [ANIMAL LEVEL UP] Hewan aktif Anda, ${eqName}, naik ke Level ${currentLvl + 1}!`);
+          } else {
+            setAnimalExp(prev => ({ ...prev, [eqName]: currentXp }));
+          }
+        }
+
         // Durability
         if (currentWeapon && !infiniteDurability) {
           setInventory(prev => {
@@ -376,7 +580,8 @@ export default function App() {
         setCooldowns(prev => ({ ...prev, battle: 15 }));
 
         const playerWeapon = inventory[activeWeaponIndex];
-        const playerPower = playerWeapon ? playerWeapon.dmg : 5;
+        const animalLevelBonus = equippedAnimal ? (animalLevels[equippedAnimal.name] || 1) * 35 : 0;
+        const playerPower = (playerWeapon ? playerWeapon.dmg : 5) + animalLevelBonus;
         const enemyPower = Math.floor(Math.random() * 40) + 15;
 
         const playerRoll = playerPower * (Math.random() * 0.4 + 0.8);
@@ -398,7 +603,7 @@ export default function App() {
             : `[BATTLE] @User kalah dalam pertarungan melawan monster liar.`,
           {
             title: isWin ? "Victory!" : "Defeat!",
-            description: `Kekuatan Anda: ${playerRoll.toFixed(1)} DMG\nKekuatan Monster: ${enemyRoll.toFixed(1)} DMG\n\nHasil: ${isWin ? "Menang!" : "Kalah"}\nHadiah: +${cowoncyReward} Cowoncy\nExp: +${expReward * xpMultiplier} XP`
+            description: `Kekuatan Anda: ${playerRoll.toFixed(1)} DMG ${equippedAnimal ? `(+${animalLevelBonus} Animal Lv.${animalLevels[equippedAnimal.name] || 1} Boost)` : ""}\nKekuatan Monster: ${enemyRoll.toFixed(1)} DMG\n\nHasil: ${isWin ? "Menang!" : "Kalah"}\nHadiah: +${cowoncyReward} Cowoncy\nExp: +${expReward * xpMultiplier} XP`
           }
         );
 
@@ -619,6 +824,8 @@ export default function App() {
         setCrates(user.state.crates);
         setLootboxes(user.state.lootboxes);
         setEquippedAnimal(user.state.equippedAnimal || null);
+        setAnimalLevels(user.state.animalLevels || {});
+        setAnimalExp(user.state.animalExp || {});
       } else {
         // Reset to default for fresh user
         setCowoncy(1000);
@@ -630,6 +837,8 @@ export default function App() {
         setCrates(2);
         setLootboxes(2);
         setEquippedAnimal(null);
+        setAnimalLevels({});
+        setAnimalExp({});
       }
 
       setAuthSuccess(`Selamat datang kembali, ${user.username}!`);
@@ -1039,6 +1248,11 @@ export default function App() {
                           Dimiliki: {count}
                         </span>
                       </div>
+                      {count > 0 && (
+                        <div style={{ fontSize: "0.75rem", color: "#64d2ff", fontWeight: "600" }}>
+                          Lv. {animalLevels[ani.name] || 1} ({animalExp[ani.name] || 0} / {(animalLevels[ani.name] || 1) * 100} XP)
+                        </div>
+                      )}
                       <span style={{ fontSize: "0.75rem", color: "#32d74b", fontWeight: "600" }}>
                         Boost: {passiveDesc}
                       </span>
@@ -1117,9 +1331,6 @@ export default function App() {
                 <button className="btn-action-mobile" onClick={() => handleCommand("/owo zoo")}>
                   <PawIcon /> Zoo
                 </button>
-                <button className="btn-action-mobile" onClick={() => handleCommand("/owo shop")}>
-                  <ShopIcon /> Shop
-                </button>
                 <button className="btn-action-mobile" onClick={() => handleCommand("/owo open crate")}>
                   <CrateIcon /> Crate ({crates})
                 </button>
@@ -1159,11 +1370,96 @@ export default function App() {
           </div>
         );
 
-      case "wiki":
+      case "comments": {
+        const handleSendComment = async (e) => {
+          e.preventDefault();
+          if (!newCommentText.trim()) return;
+          const comm = {
+            id: Math.random().toString(),
+            username: currentUser ? currentUser.username : "Anonymous",
+            body: newCommentText,
+            time: new Date().toLocaleString()
+          };
+          await OnlineDB.addComment(comm);
+          setNewCommentText("");
+          const updated = await OnlineDB.getComments();
+          setComments(updated);
+        };
+
+        const handleDeleteComment = async (id) => {
+          if (confirm("Hapus komentar ini?")) {
+            await OnlineDB.deleteComment(id);
+            const updated = await OnlineDB.getComments();
+            setComments(updated);
+          }
+        };
+
         return (
           <div className="chat-area" style={{ overflowY: "auto", padding: "1rem" }}>
-            <h2 style={{ color: "#ff3b3b", marginBottom: "1rem" }}>Ensiklopedia Game</h2>
-            <div style={{ display: "flex", marginBottom: "1rem" }}>
+            <h2 style={{ color: "#ff3b3b", marginBottom: "1rem" }}>Kolom Komentar Global</h2>
+            
+            <form onSubmit={handleSendComment} style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
+              <input
+                type="text"
+                className="form-input"
+                style={{ flexGrow: 1 }}
+                placeholder="Tulis ulasan/komentar tentang game ini..."
+                value={newCommentText}
+                onChange={(e) => setNewCommentText(e.target.value)}
+              />
+              <button type="submit" className="btn-primary" style={{ padding: "0.6rem 1.2rem", fontSize: "0.9rem" }}>Kirim</button>
+            </form>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+              {comments.map(c => (
+                <div 
+                  key={c.id} 
+                  style={{
+                    background: "rgba(30, 2, 2, 0.5)",
+                    border: "1px solid #3d0d0d",
+                    borderRadius: "12px",
+                    padding: "0.9rem",
+                    textAlign: "left",
+                    position: "relative"
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.3rem" }}>
+                    <span style={{ fontWeight: "700", color: "#ff3b3b" }}>{c.username}</span>
+                    <span style={{ fontSize: "0.7rem", color: "#8e8e93" }}>{c.time}</span>
+                  </div>
+                  <p style={{ fontSize: "0.9rem", color: "#fff", margin: 0 }}>{c.body}</p>
+                  
+                  {currentUser?.isAdmin && (
+                    <button 
+                      style={{
+                        position: "absolute",
+                        right: "0.9rem",
+                        bottom: "0.9rem",
+                        background: "#ff3b30",
+                        border: "none",
+                        color: "#fff",
+                        padding: "0.2rem 0.5rem",
+                        borderRadius: "4px",
+                        fontSize: "0.7rem",
+                        cursor: "pointer"
+                      }}
+                      onClick={() => handleDeleteComment(c.id)}
+                    >
+                      Hapus
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      case "info":
+        return (
+          <div className="chat-area" style={{ overflowY: "auto", padding: "1rem" }}>
+            <h2 style={{ color: "#ff3b3b", marginBottom: "1rem" }}>Info & Ensiklopedia</h2>
+            <div style={{ display: "flex", marginBottom: "1rem", gap: "0.3rem" }}>
               <button 
                 className={`wiki-tab-btn ${activeWikiTab === "animals" ? "active" : ""}`}
                 onClick={() => setActiveWikiTab("animals")}
@@ -1176,31 +1472,54 @@ export default function App() {
               >
                 Senjata
               </button>
+              <button 
+                className={`wiki-tab-btn ${activeWikiTab === "leaderboard" ? "active" : ""}`}
+                onClick={() => setActiveWikiTab("leaderboard")}
+              >
+                Leaderboard
+              </button>
             </div>
-            <div className="wiki-list">
-              {activeWikiTab === "animals" ? (
-                Object.keys(ANIMALS).map(rarity => 
-                  ANIMALS[rarity].map(ani => (
-                    <div className="wiki-item" key={ani.name}>
-                      <span className="wiki-name"><PawIcon /> {ani.name}</span>
-                      <span className={`wiki-rarity rarity-${ani.rarity}`}>{ani.rarity}</span>
+            
+            {activeWikiTab === "leaderboard" ? (
+              <div className="profile-stats" style={{ background: "#0e0202", padding: "1.2rem", borderRadius: "12px", border: "1px solid #330d0d" }}>
+                <div style={{ fontWeight: "800", color: "#ffd60a", marginBottom: "0.8rem", fontSize: "0.95rem" }}>Top 10 Pemain Global</div>
+                {leaderboard.map((usr, idx) => (
+                  <div key={usr.username} className="stat-row" style={{ borderBottom: "1px solid #330d0d", padding: "0.6rem 0" }}>
+                    <span style={{ color: idx < 3 ? "#ff3b3b" : "#fff", fontWeight: "700" }}>
+                      [{idx + 1}] {usr.username} {usr.isAdmin && "👑"}
+                    </span>
+                    <span style={{ color: "#c9b1b1" }}>
+                      Lv. {usr.state?.level || 1} ({usr.state?.cowoncy || 0} 🪙)
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="wiki-list">
+                {activeWikiTab === "animals" ? (
+                  Object.keys(ANIMALS).map(rarity => 
+                    ANIMALS[rarity].map(ani => (
+                      <div className="wiki-item" key={ani.name}>
+                        <span className="wiki-name"><PawIcon /> {ani.name}</span>
+                        <span className={`wiki-rarity rarity-${ani.rarity}`}>{ani.rarity}</span>
+                      </div>
+                    ))
+                  )
+                ) : (
+                  WEAPONS.map(w => (
+                    <div className="wiki-item" key={w.id} style={{flexDirection: "column", alignItems: "flex-start", gap: "0.2rem"}}>
+                      <div style={{display: "flex", justifyContent: "space-between", width: "100%"}}>
+                        <span className="wiki-name"><SwordsIcon /> {w.name}</span>
+                        <span className={`wiki-rarity rarity-${w.tier}`}>{w.tier}</span>
+                      </div>
+                      <div style={{fontSize: "0.8rem", color: "#c9b1b1"}}>
+                        DMG: {w.dmg} | Price: {w.price} | Durability: {w.durability}
+                      </div>
                     </div>
                   ))
-                )
-              ) : (
-                WEAPONS.map(w => (
-                  <div className="wiki-item" key={w.id} style={{flexDirection: "column", alignItems: "flex-start", gap: "0.2rem"}}>
-                    <div style={{display: "flex", justifyContent: "space-between", width: "100%"}}>
-                      <span className="wiki-name"><SwordsIcon /> {w.name}</span>
-                      <span className={`wiki-rarity rarity-${w.tier}`}>{w.tier}</span>
-                    </div>
-                    <div style={{fontSize: "0.8rem", color: "#c9b1b1"}}>
-                      DMG: {w.dmg} | Price: {w.price} | Durability: {w.durability}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         );
 
@@ -1254,17 +1573,51 @@ export default function App() {
             </p>
             
             {currentUser?.isAdmin ? (
-              <div className="admin-grid">
-                {adminFeatures.map(f => (
-                  <div className="admin-card" key={f.id}>
-                    <div>
-                      <div className="admin-card-title">{f.id}. {f.title}</div>
-                      <div className="admin-card-desc">{f.desc}</div>
+              <>
+                <div className="admin-grid">
+                  {adminFeatures.map(f => (
+                    <div className="admin-card" key={f.id}>
+                      <div>
+                        <div className="admin-card-title">{f.id}. {f.title}</div>
+                        <div className="admin-card-desc">{f.desc}</div>
+                      </div>
+                      <button className="admin-btn" onClick={f.action}>Eksekusi</button>
                     </div>
-                    <button className="admin-btn" onClick={f.action}>Eksekusi</button>
+                  ))}
+                </div>
+
+                {/* Secret Monitor Dashboard */}
+                <div style={{ marginTop: "2rem", borderTop: "1px solid #330d0d", paddingTop: "1.5rem" }}>
+                  <h3 style={{ color: "#ffd60a", marginBottom: "0.8rem", fontSize: "1.1rem" }}>
+                    Monitor Dashboard (Akun Terdaftar: {allUsers.length})
+                  </h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                    {allUsers.map(usr => (
+                      <div 
+                        key={usr.username} 
+                        style={{
+                          background: "rgba(20, 2, 2, 0.7)",
+                          border: "1px solid #541414",
+                          borderRadius: "12px",
+                          padding: "0.9rem",
+                          textAlign: "left"
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+                          <span style={{ fontWeight: "700", color: "#ff3b3b" }}>{usr.username} {usr.isAdmin && "👑"}</span>
+                          <span style={{ fontSize: "0.75rem", color: "#32d74b", fontWeight: "700" }}>Level {usr.state?.level || 1}</span>
+                        </div>
+                        <div style={{ fontSize: "0.8rem", color: "#c9b1b1" }}>
+                          Saldo: {usr.state?.cowoncy || 0} Cowoncy | Crate: {usr.state?.crates || 0} | Box: {usr.state?.lootboxes || 0}
+                        </div>
+                        <div style={{ fontSize: "0.75rem", color: "#8e8e93", marginTop: "0.2rem" }}>
+                          Hewan Aktif: {usr.state?.equippedAnimal?.name || "None"}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              </>
             ) : (
               <div style={{ color: "#ff3b30", fontWeight: "700" }}>Akses ditolak. Fitur ini hanya untuk pengguna Administrator.</div>
             )}
@@ -1323,40 +1676,46 @@ export default function App() {
             </div>
           </>
         ) : (
-          <div className="auth-panel">
+          <div className="auth-panel gothic-login">
+            <div className="auth-anime-logo">
+              <div className="auth-brand">GLVS // RUN</div>
+              <div className="auth-sub-brand">OwO Bot Gothic Crimson Simulator</div>
+              <div className="auth-gasp-accent"></div>
+            </div>
+
             <div className="auth-tabs">
               <button 
                 className={`auth-tab-btn ${authTab === "login" ? "active" : ""}`}
                 onClick={() => { setAuthTab("login"); setAuthError(""); setAuthSuccess(""); }}
               >
-                Masuk
+                MASUK TERMINAL
               </button>
               <button 
                 className={`auth-tab-btn ${authTab === "register" ? "active" : ""}`}
                 onClick={() => { setAuthTab("register"); setAuthError(""); setAuthSuccess(""); }}
               >
-                Daftar
+                REGISTRASI
               </button>
             </div>
             
             <form onSubmit={handleAuthSubmit} className="auth-form">
               <div className="form-group">
-                <label>Username</label>
+                <label>ID USERNAME</label>
                 <input 
                   type="text" 
                   className="form-input" 
-                  placeholder="Masukkan username..." 
+                  placeholder="ID Username Anda..." 
                   value={usernameInput}
                   onChange={(e) => setUsernameInput(e.target.value)}
                 />
               </div>
 
               <div className="form-group">
-                <label>Password</label>
+                <label>KODE AKSES (PASSWORD)</label>
                 <input 
                   type="password" 
                   className="form-input" 
-                  placeholder="Masukkan password..." 
+                  placeholder="Kode Akses Rahasia..." 
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
                 />
@@ -1365,12 +1724,12 @@ export default function App() {
               {authError && <div className="auth-error">{authError}</div>}
               {authSuccess && <div className="auth-success">{authSuccess}</div>}
 
-              <button type="submit" className="btn-primary" style={{ width: "100%", marginTop: "0.5rem" }}>
-                {authTab === "login" ? "Masuk ke Game" : "Buat Akun"}
+              <button type="submit" className="btn-primary auth-submit-btn" style={{ width: "100%", marginTop: "0.5rem" }}>
+                {authTab === "login" ? "KONEKSIKAN TERMINAL" : "DAFTAR ANGGOTA BARU"}
               </button>
 
-              <button type="button" className="btn-secondary" style={{ width: "100%" }} onClick={() => setShowAuth(false)}>
-                Kembali
+              <button type="button" className="btn-secondary auth-back-btn" style={{ width: "100%" }} onClick={() => setShowAuth(false)}>
+                KEMBALI KE BERANDA
               </button>
             </form>
           </div>
@@ -1386,7 +1745,7 @@ export default function App() {
         {renderMobileView()}
 
         {/* Mobile Portrait Bottom Navigation Bar */}
-        <nav className="mobile-nav-bar" style={{ display: "grid", gridTemplateColumns: currentUser?.isAdmin ? "repeat(6, 1fr)" : "repeat(5, 1fr)", height: "64px" }}>
+        <nav className="mobile-nav-bar" style={{ display: "grid", gridTemplateColumns: currentUser?.isAdmin ? "repeat(7, 1fr)" : "repeat(6, 1fr)", height: "64px" }}>
           <button className={`mobile-nav-btn ${mobileTab === "chat" ? "active" : ""}`} onClick={() => setMobileTab("chat")}>
             <PawIcon />
             <span>Chat</span>
@@ -1399,9 +1758,13 @@ export default function App() {
             <TrophyIcon />
             <span>Tim</span>
           </button>
-          <button className={`mobile-nav-btn ${mobileTab === "wiki" ? "active" : ""}`} onClick={() => setMobileTab("wiki")}>
+          <button className={`mobile-nav-btn ${mobileTab === "comments" ? "active" : ""}`} onClick={() => setMobileTab("comments")}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>Komen</span>
+          </button>
+          <button className={`mobile-nav-btn ${mobileTab === "info" ? "active" : ""}`} onClick={() => setMobileTab("info")}>
             <BookIcon />
-            <span>Wiki</span>
+            <span>Info</span>
           </button>
           <button className={`mobile-nav-btn ${mobileTab === "profile" ? "active" : ""}`} onClick={() => setMobileTab("profile")}>
             <UserIcon />
@@ -1414,6 +1777,28 @@ export default function App() {
             </button>
           )}
         </nav>
+
+        {/* Caught Animal Splash Overlay Screen */}
+        {caughtAnimalEffect && (
+          <div 
+            className="caught-overlay-container" 
+            onClick={() => setCaughtAnimalEffect(null)}
+          >
+            <div className="caught-card-body gothic-card glow-crimson animate-splash">
+              <h3 className="caught-sub">HEWAN BARU TERTANGKAP!</h3>
+              <div className="caught-gasp animate-pulse">
+                🐾 {caughtAnimalEffect.name}
+              </div>
+              <div className={`caught-badge rarity-${caughtAnimalEffect.rarity}`}>
+                {caughtAnimalEffect.rarity}
+              </div>
+              <div className="caught-stats">
+                Nilai EXP: +{caughtAnimalEffect.exp} XP
+              </div>
+              <p className="caught-tip">Klik di mana saja untuk menutup</p>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1587,9 +1972,6 @@ export default function App() {
                   <button className="btn-action-mobile" onClick={() => handleCommand("/owo zoo")}>
                     <PawIcon /> Zoo
                   </button>
-                  <button className="btn-action-mobile" onClick={() => handleCommand("/owo shop")}>
-                    <ShopIcon /> Shop
-                  </button>
                   <button className="btn-action-mobile" onClick={() => handleCommand("/owo open crate")}>
                     <CrateIcon /> Crate ({crates})
                   </button>
@@ -1710,6 +2092,28 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {/* Caught Animal Splash Overlay Screen */}
+      {caughtAnimalEffect && (
+        <div 
+          className="caught-overlay-container" 
+          onClick={() => setCaughtAnimalEffect(null)}
+        >
+          <div className="caught-card-body gothic-card glow-crimson animate-splash">
+            <h3 className="caught-sub">HEWAN BARU TERTANGKAP!</h3>
+            <div className="caught-gasp animate-pulse">
+              🐾 {caughtAnimalEffect.name}
+            </div>
+            <div className={`caught-badge rarity-${caughtAnimalEffect.rarity}`}>
+              {caughtAnimalEffect.rarity}
+            </div>
+            <div className="caught-stats">
+              Nilai EXP: +{caughtAnimalEffect.exp} XP
+            </div>
+            <p className="caught-tip">Klik di mana saja untuk menutup</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
