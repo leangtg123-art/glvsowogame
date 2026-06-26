@@ -1,13 +1,466 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>vite-init</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glvsowogame — Masuk ke Dunia Leanian</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root{
+    --bg-deep:#0c0000;
+    --bg-panel:#1a0202;
+    --bg-card:#2d0505;
+    --blue:#ff3b3b;
+    --blue-soft:#ff6b6b;
+    --pink:#ff2d55;
+    --gold:#ffd60a;
+    --white:#ffeded;
+    --mute:#c9b1b1;
+    --line:rgba(255,59,59,0.18);
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    background:var(--bg-deep);
+    color:var(--white);
+    font-family:'Inter', sans-serif;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  /* ---------- ambient bg ---------- */
+  .bg-glow{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(ellipse 700px 500px at 15% 10%, rgba(77,127,255,0.20), transparent 60%),
+      radial-gradient(ellipse 600px 600px at 90% 25%, rgba(255,143,203,0.14), transparent 60%),
+      radial-gradient(ellipse 800px 500px at 50% 100%, rgba(255,209,102,0.08), transparent 60%);
+  }
+  .starfield{ position:fixed; inset:0; z-index:0; pointer-events:none; }
+  .star{
+    position:absolute; width:3px; height:3px; border-radius:50%;
+    background:var(--white); opacity:.5;
+    animation:twinkle 3.5s ease-in-out infinite;
+  }
+  @keyframes twinkle{ 0%,100%{opacity:.15; transform:scale(1);} 50%{opacity:.9; transform:scale(1.4);} }
+
+  section, header, footer{ position:relative; z-index:1; }
+
+  /* ---------- nav ---------- */
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:26px 6%;
+    position:relative; z-index:10;
+  }
+  .logo{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:22px; letter-spacing:.5px;
+  }
+  .logo-orb{
+    width:34px; height:34px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #B9CBFF, var(--blue) 60%, #2546B0 100%);
+    box-shadow:0 0 18px rgba(77,127,255,0.7);
+    animation:bob 3.2s ease-in-out infinite;
+  }
+  .logo span{ color:var(--gold); }
+  .nav-links{ display:flex; gap:34px; font-size:15px; color:var(--mute); }
+  .nav-links a{ color:var(--mute); text-decoration:none; transition:color .25s; }
+  .nav-links a:hover{ color:var(--white); }
+  .nav-cta{
+    background:linear-gradient(135deg, var(--blue), #2546B0);
+    color:#fff; border:none; padding:11px 22px; border-radius:999px;
+    font-family:'Inter'; font-weight:600; font-size:14px; cursor:pointer;
+    box-shadow:0 8px 20px rgba(77,127,255,0.35);
+    transition:transform .2s ease, box-shadow .2s ease;
+  }
+  .nav-cta:hover{ transform:translateY(-2px); box-shadow:0 12px 26px rgba(77,127,255,0.5); }
+
+  @media (max-width:860px){ .nav-links{ display:none; } }
+
+  /* ---------- hero ---------- */
+  .hero{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:60px 6% 40px; gap:40px; min-height:78vh;
+  }
+  .hero-text{ max-width:540px; }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'Space Mono', monospace; font-size:12px; letter-spacing:1.5px;
+    color:var(--gold); background:rgba(255,209,102,0.1);
+    border:1px solid rgba(255,209,102,0.3); border-radius:999px;
+    padding:6px 14px; margin-bottom:22px; text-transform:uppercase;
+  }
+  .eyebrow::before{ content:'✦'; }
+  h1{
+    font-family:'Baloo 2', sans-serif; font-weight:800;
+    font-size:clamp(40px, 6vw, 64px); line-height:1.05; letter-spacing:-1px;
+    margin-bottom:20px;
+  }
+  h1 .accent{
+    background:linear-gradient(120deg, var(--blue-soft), var(--pink));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero-sub{ color:var(--mute); font-size:17px; line-height:1.7; margin-bottom:32px; max-width:460px; }
+  .hero-actions{ display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  .btn-primary{
+    background:linear-gradient(135deg, var(--gold), #ffb238);
+    color:#22180a; border:none; padding:16px 30px; border-radius:14px;
+    font-family:'Baloo 2'; font-weight:700; font-size:16px; cursor:pointer;
+    box-shadow:0 10px 24px rgba(255,209,102,0.35);
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s;
+  }
+  .btn-primary:hover{ transform:translateY(-4px) scale(1.03); box-shadow:0 16px 30px rgba(255,209,102,0.5); }
+  .btn-ghost{
+    background:transparent; border:1.5px solid var(--line); color:var(--white);
+    padding:15px 26px; border-radius:14px; font-weight:600; font-size:15px; cursor:pointer;
+    display:flex; align-items:center; gap:8px; transition:border-color .25s, background .25s;
+  }
+  .btn-ghost:hover{ border-color:var(--blue-soft); background:rgba(77,127,255,0.08); }
+  .hero-stats{ display:flex; gap:34px; margin-top:42px; }
+  .stat b{ font-family:'Baloo 2'; font-size:24px; display:block; color:var(--white); }
+  .stat span{ font-size:13px; color:var(--mute); }
+
+  /* ---------- hero visual ---------- */
+  .hero-visual{
+    position:relative; width:440px; height:440px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .orb-core{
+    width:230px; height:230px; border-radius:50%;
+    background:radial-gradient(circle at 32% 28%, #C9D8FF, var(--blue) 55%, #16215C 100%);
+    box-shadow:0 0 70px rgba(77,127,255,0.55), inset -16px -16px 50px rgba(0,0,0,0.25);
+    position:relative; z-index:3;
+    animation:pulse-orb 4.5s ease-in-out infinite;
+  }
+  .orb-core::after{
+    content:''; position:absolute; inset:14%; border-radius:50%;
+    background:radial-gradient(circle at 40% 35%, rgba(255,255,255,0.55), transparent 60%);
+  }
+  @keyframes pulse-orb{
+    0%,100%{ box-shadow:0 0 70px rgba(77,127,255,0.55), inset -16px -16px 50px rgba(0,0,0,0.25); transform:scale(1); }
+    50%{ box-shadow:0 0 100px rgba(77,127,255,0.8), inset -16px -16px 50px rgba(0,0,0,0.25); transform:scale(1.035); }
+  }
+  .orbit{
+    position:absolute; border:1px dashed rgba(124,143,255,0.25); border-radius:50%;
+    top:50%; left:50%;
+  }
+  .orbit.o1{ width:340px; height:340px; margin:-170px; animation:spin 18s linear infinite; }
+  .orbit.o2{ width:420px; height:420px; margin:-210px; animation:spin 26s linear infinite reverse; }
+  @keyframes spin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
+
+  .floaty{
+    position:absolute; width:64px; height:64px; border-radius:18px;
+    display:flex; align-items:center; justify-content:center; font-size:28px;
+    background:var(--bg-card); border:1px solid var(--line);
+    box-shadow:0 10px 26px rgba(0,0,0,0.4);
+    animation:bob 3.6s ease-in-out infinite;
+  }
+  .f1{ top:0; left:18px; animation-delay:.2s; background:linear-gradient(160deg,#2a3460,#1B2342); }
+  .f2{ top:40px; right:-10px; animation-delay:1s; }
+  .f3{ bottom:30px; left:-20px; animation-delay:.6s; }
+  .f4{ bottom:-6px; right:60px; animation-delay:1.4s; }
+  @keyframes bob{ 0%,100%{ transform:translateY(0px) rotate(-3deg); } 50%{ transform:translateY(-14px) rotate(3deg); } }
+
+  .sparkle{ position:absolute; color:var(--gold); font-size:18px; animation:twinkle 2.4s ease-in-out infinite; }
+
+  @media (max-width:980px){
+    .hero{ flex-direction:column; text-align:center; padding-top:30px; }
+    .hero-text{ max-width:100%; }
+    .hero-sub{ margin-inline:auto; }
+    .hero-actions{ justify-content:center; }
+    .hero-stats{ justify-content:center; }
+    .hero-visual{ width:320px; height:320px; }
+    .orb-core{ width:170px; height:170px; }
+  }
+
+  /* ---------- marquee strip ---------- */
+  .marquee-wrap{
+    border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+    background:var(--bg-panel); padding:16px 0; overflow:hidden;
+  }
+  .marquee{ display:flex; width:max-content; animation:scroll-x 22s linear infinite; gap:60px; }
+  .marquee span{
+    font-family:'Baloo 2'; font-size:15px; color:var(--mute);
+    display:flex; align-items:center; gap:10px; white-space:nowrap;
+  }
+  .marquee span b{ color:var(--blue-soft); }
+  @keyframes scroll-x{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+
+  /* ---------- section shell ---------- */
+  .section{ padding:100px 6%; }
+  .section-head{ max-width:600px; margin:0 auto 60px; text-align:center; }
+  .section-head .eyebrow{ background:rgba(77,127,255,0.1); border-color:rgba(77,127,255,0.3); color:var(--blue-soft); }
+  .section-head h2{
+    font-family:'Baloo 2'; font-size:clamp(28px,4vw,40px); font-weight:700; margin:14px 0 14px;
+  }
+  .section-head p{ color:var(--mute); font-size:16px; line-height:1.7; }
+
+  /* ---------- feature cards ---------- */
+  .grid-features{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:26px; max-width:1100px; margin:0 auto;
+  }
+  @media (max-width:860px){ .grid-features{ grid-template-columns:1fr; } }
+  .fcard{
+    background:var(--bg-card); border:1px solid var(--line); border-radius:22px;
+    padding:32px 26px; transition:transform .3s ease, border-color .3s ease;
+    position:relative; overflow:hidden;
+  }
+  .fcard:hover{ transform:translateY(-8px); border-color:rgba(124,143,255,0.45); }
+  .fcard:hover .ficon{ transform:scale(1.15) rotate(-6deg); }
+  .ficon{
+    width:54px; height:54px; border-radius:16px; display:flex; align-items:center; justify-content:center;
+    font-size:24px; margin-bottom:18px; transition:transform .35s cubic-bezier(.34,1.56,.64,1);
+  }
+  .ficon.b{ background:rgba(77,127,255,0.15); }
+  .ficon.p{ background:rgba(255,143,203,0.15); }
+  .ficon.g{ background:rgba(255,209,102,0.15); }
+  .fcard h3{ font-family:'Baloo 2'; font-size:19px; margin-bottom:10px; }
+  .fcard p{ color:var(--mute); font-size:14.5px; line-height:1.65; }
+
+  /* ---------- showcase ---------- */
+  .showcase{
+    display:grid; grid-template-columns:1fr 1fr; gap:50px; align-items:center;
+    max-width:1100px; margin:0 auto;
+  }
+  @media (max-width:900px){ .showcase{ grid-template-columns:1fr; } }
+  .showcase-visual{
+    position:relative; height:380px; display:flex; align-items:center; justify-content:center;
+  }
+  .card-stack{ position:relative; width:240px; height:300px; }
+  .gamecard{
+    position:absolute; width:200px; height:280px; border-radius:20px;
+    background:linear-gradient(155deg, var(--bg-card), #0E1430);
+    border:1px solid var(--line); box-shadow:0 20px 50px rgba(0,0,0,0.5);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    transition:transform .4s ease;
+  }
+  .gamecard .glyph{ font-size:48px; }
+  .gamecard .clabel{ font-family:'Space Mono'; font-size:11px; color:var(--mute); letter-spacing:1px; }
+  .gc1{ transform:rotate(-12deg) translate(-50px, 6px); z-index:1; animation:card-drift 6s ease-in-out infinite; }
+  .gc2{ transform:rotate(2deg) translate(0,-10px); z-index:2; animation:card-drift 6s ease-in-out infinite 1.4s; }
+  .gc3{ transform:rotate(14deg) translate(50px, 8px); z-index:1; animation:card-drift 6s ease-in-out infinite 2.8s; }
+  @keyframes card-drift{ 0%,100%{ translate:0 0; } 50%{ translate:0 -10px; } }
+
+  .showcase-text h2{ font-family:'Baloo 2'; font-size:clamp(26px,3.4vw,36px); margin-bottom:18px; }
+  .showcase-text p{ color:var(--mute); line-height:1.75; margin-bottom:22px; }
+  .checklist{ display:flex; flex-direction:column; gap:14px; }
+  .checklist div{ display:flex; align-items:flex-start; gap:12px; font-size:14.5px; color:var(--white); }
+  .checklist .tick{
+    width:22px; height:22px; border-radius:50%; background:rgba(77,127,255,0.18);
+    display:flex; align-items:center; justify-content:center; color:var(--blue-soft); font-size:12px; flex-shrink:0; margin-top:1px;
+  }
+
+  /* ---------- roster strip ---------- */
+  .roster{ max-width:1100px; margin:0 auto; }
+  .roster-row{ display:flex; gap:18px; overflow-x:auto; padding-bottom:8px; scrollbar-width:thin; }
+  .roster-row::-webkit-scrollbar{ height:6px; }
+  .roster-row::-webkit-scrollbar-thumb{ background:var(--line); border-radius:6px; }
+  .rchip{
+    flex-shrink:0; width:150px; height:170px; border-radius:18px;
+    background:var(--bg-card); border:1px solid var(--line);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    transition:transform .25s, border-color .25s;
+  }
+  .rchip:hover{ transform:translateY(-6px); border-color:var(--blue-soft); }
+  .rchip .em{ font-size:34px; }
+  .rchip .nm{ font-family:'Baloo 2'; font-size:13px; color:var(--mute); }
+
+  /* ---------- CTA band ---------- */
+  .cta-band{
+    margin:0 6%; padding:70px 6%; border-radius:32px; text-align:center;
+    background:linear-gradient(135deg, #16205A, #1B2A6B 50%, #2B205A);
+    position:relative; overflow:hidden; border:1px solid rgba(124,143,255,0.3);
+  }
+  .cta-band::before, .cta-band::after{
+    content:''; position:absolute; width:260px; height:260px; border-radius:50%;
+    background:rgba(255,255,255,0.05); filter:blur(10px);
+  }
+  .cta-band::before{ top:-100px; left:-80px; }
+  .cta-band::after{ bottom:-120px; right:-60px; background:rgba(255,143,203,0.12); }
+  .cta-band h2{ font-family:'Baloo 2'; font-size:clamp(28px,4vw,40px); margin-bottom:14px; position:relative; z-index:2; }
+  .cta-band p{ color:var(--mute); margin-bottom:30px; position:relative; z-index:2; }
+  .cta-band .hero-actions{ justify-content:center; position:relative; z-index:2; }
+
+  /* ---------- footer ---------- */
+  footer{ padding:50px 6% 30px; border-top:1px solid var(--line); margin-top:40px; }
+  .foot-row{
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;
+  }
+  .foot-links{ display:flex; gap:24px; font-size:14px; color:var(--mute); }
+  .foot-links a{ color:var(--mute); text-decoration:none; }
+  .foot-links a:hover{ color:var(--white); }
+  .foot-copy{ color:var(--mute); font-size:13px; margin-top:24px; text-align:center; }
+
+  ::selection{ background:var(--blue); color:#fff; }
+</style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+<div class="starfield" id="starfield"></div>
+
+<nav>
+  <div class="logo"><div class="logo-orb"></div>Glvso<span>wo</span>game</div>
+  <div class="nav-links">
+    <a href="#fitur">Fitur</a>
+    <a href="#dunia">Dunia</a>
+    <a href="#roster">Roster</a>
+    <a href="#unduh">Unduh</a>
+  </div>
+  <button class="nav-cta">Mainkan Sekarang</button>
+</nav>
+
+<header class="hero">
+  <div class="hero-text">
+    <div class="eyebrow">Leanian Edition</div>
+    <h1>Petualangan <span class="accent">OwO</span> dimulai dari satu klik.</h1>
+    <p class="hero-sub">Glvsowogame membawamu ke dunia Leanian — RPG ringan berbasis browser dengan ratusan musuh, sistem hadiah harian, dan pertarungan yang makin seru tiap kamu naik level.</p>
+    <div class="hero-actions">
+      <button class="btn-primary">Mulai Bertarung ✦</button>
+      <button class="btn-ghost">▶ Lihat Trailer</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><b>100+</b><span>Musuh unik</span></div>
+      <div class="stat"><b>0 MB</b><span>Tanpa instal</span></div>
+      <div class="stat"><b>24/7</b><span>Streak harian</span></div>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="orbit o1"></div>
+    <div class="orbit o2"></div>
+    <div class="orb-core"></div>
+    <div class="floaty f1">🎲</div>
+    <div class="floaty f2">🗡️</div>
+    <div class="floaty f3">🛡️</div>
+    <div class="floaty f4">💎</div>
+    <div class="sparkle" style="top:10%; left:8%;">✦</div>
+    <div class="sparkle" style="top:75%; right:12%; animation-delay:1s;">✦</div>
+    <div class="sparkle" style="top:55%; left:0%; animation-delay:.5s;">✧</div>
+  </div>
+</header>
+
+<div class="marquee-wrap">
+  <div class="marquee" id="marquee">
+    <span><b>100+</b> Roster Musuh</span>
+    <span><b>Autosave</b> Setiap Langkah</span>
+    <span><b>Streak</b> Hadiah Harian</span>
+    <span><b>Random Event</b> Tiap Sesi</span>
+    <span><b>Mobile-Friendly</b> Drawer UI</span>
+    <span><b>100+</b> Roster Musuh</span>
+    <span><b>Autosave</b> Setiap Langkah</span>
+    <span><b>Streak</b> Hadiah Harian</span>
+    <span><b>Random Event</b> Tiap Sesi</span>
+    <span><b>Mobile-Friendly</b> Drawer UI</span>
+  </div>
+</div>
+
+<section class="section" id="fitur">
+  <div class="section-head">
+    <div class="eyebrow">Mengapa Glvsowogame</div>
+    <h2>Dibuat untuk dimainkan kapan saja, di mana saja</h2>
+    <p>Satu file, semua tersimpan — langsung jalan di browser tanpa drama instalasi.</p>
+  </div>
+  <div class="grid-features">
+    <div class="fcard">
+      <div class="ficon b">⚔️</div>
+      <h3>Roster Musuh Prosedural</h3>
+      <p>Lebih dari 100 musuh dengan kombinasi stat acak, jadi tiap pertarungan terasa baru — tidak ada dua sesi yang sama.</p>
+    </div>
+    <div class="fcard">
+      <div class="ficon p">💾</div>
+      <h3>Autosave & Lanjut Kapan Saja</h3>
+      <p>Progres tersimpan otomatis lewat sistem penyimpanan ringan. Tutup tab, buka lagi besok, lanjut dari titik terakhir.</p>
+    </div>
+    <div class="fcard">
+      <div class="ficon g">🔥</div>
+      <h3>Streak & Hadiah Harian</h3>
+      <p>Login tiap hari, kumpulkan streak, buka hadiah yang makin besar. Kebiasaan kecil, kepuasan besar.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="dunia">
+  <div class="showcase">
+    <div class="showcase-visual">
+      <div class="card-stack">
+        <div class="gamecard gc1"><div class="glyph">🐉</div><div class="clabel">RARE ENEMY</div></div>
+        <div class="gamecard gc2"><div class="glyph">🧙</div><div class="clabel">BOSS EVENT</div></div>
+        <div class="gamecard gc3"><div class="glyph">👾</div><div class="clabel">COMMON MOB</div></div>
+      </div>
+    </div>
+    <div class="showcase-text">
+      <h2>Sistem kesulitan yang naik bareng kamu</h2>
+      <p>Tiap kemenangan bikin dunia Leanian sedikit lebih galak — musuh makin kuat, event makin liar, hadiah makin sepadan. Tantangan yang adil, progres yang selalu kelihatan.</p>
+      <div class="checklist">
+        <div><div class="tick">✓</div>Kesulitan eskalasi otomatis tiap babak</div>
+        <div><div class="tick">✓</div>Random event yang bikin tiap run beda</div>
+        <div><div class="tick">✓</div>UI drawer & tooltip ramah sentuhan di HP</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="roster">
+  <div class="section-head">
+    <div class="eyebrow">Cuplikan Roster</div>
+    <h2>Sebagian kecil dari 100+ lawan yang menunggu</h2>
+  </div>
+  <div class="roster">
+    <div class="roster-row">
+      <div class="rchip"><div class="em">👾</div><div class="nm">Slime Pixel</div></div>
+      <div class="rchip"><div class="em">🦇</div><div class="nm">Bat Shadow</div></div>
+      <div class="rchip"><div class="em">🧟</div><div class="nm">Husk Ronin</div></div>
+      <div class="rchip"><div class="em">🐺</div><div class="nm">Wolf Frost</div></div>
+      <div class="rchip"><div class="em">🕷️</div><div class="nm">Web Sentinel</div></div>
+      <div class="rchip"><div class="em">🐉</div><div class="nm">Drake Ember</div></div>
+      <div class="rchip"><div class="em">👹</div><div class="nm">Oni Brute</div></div>
+      <div class="rchip"><div class="em">🧙</div><div class="nm">Void Mage</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="unduh">
+  <div class="cta-band">
+    <h2>Siap masuk ke Leanian malam ini?</h2>
+    <p>Gratis, tanpa instal, langsung dari browser kamu.</p>
+    <div class="hero-actions">
+      <button class="btn-primary">Mainkan Glvsowogame ✦</button>
+      <button class="btn-ghost">📖 Baca Panduan</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-row">
+    <div class="logo"><div class="logo-orb" style="width:26px;height:26px;"></div>Glvso<span>wo</span>game</div>
+    <div class="foot-links">
+      <a href="#fitur">Fitur</a>
+      <a href="#dunia">Dunia</a>
+      <a href="#roster">Roster</a>
+      <a href="#unduh">Unduh</a>
+    </div>
+  </div>
+  <div class="foot-copy">© 2026 Glvsowogame — Leanian Edition. Dibuat dengan ✦ untuk para petualang browser.</div>
+</footer>
+
+<script>
+  // generate starfield
+  const sf = document.getElementById('starfield');
+  for(let i=0;i<60;i++){
+    const s = document.createElement('div');
+    s.className='star';
+    s.style.top = Math.random()*100+'%';
+    s.style.left = Math.random()*100+'%';
+    s.style.animationDelay = (Math.random()*3.5)+'s';
+    s.style.width = s.style.height = (Math.random()*2+1.5)+'px';
+    sf.appendChild(s);
+  }
+</script>
+
+<div id="root"></div>
+<script type="module" src="/src/main.jsx"></script>
+</body>
 </html>

@@ -221,6 +221,27 @@ const OnlineDB = {
     } catch (e) {
       console.error(e);
     }
+  },
+  async getAnnouncement() {
+    try {
+      const res = await fetch(`${DB_URL}/announcement.json`);
+      if (!res.ok) return "Selamat datang di Gothic Crimson OwO RPG Simulator!";
+      const data = await res.json();
+      return data?.text || "Selamat datang di Gothic Crimson OwO RPG Simulator!";
+    } catch (e) {
+      return "Selamat datang di Gothic Crimson OwO RPG Simulator!";
+    }
+  },
+  async saveAnnouncement(text) {
+    try {
+      await fetch(`${DB_URL}/announcement.json`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      });
+    } catch (e) {
+      console.error(e);
+    }
   }
 };
 
@@ -293,6 +314,7 @@ export default function App() {
   const [animalsCaught, setAnimalsCaught] = useState({});
   const [crates, setCrates] = useState(2);
   const [lootboxes, setLootboxes] = useState(2);
+  const [lastClaimed, setLastClaimed] = useState(0);
   const [equippedAnimal, setEquippedAnimal] = useState(null);
   const [shopPageTab, setShopPageTab] = useState(0);
   const [zooPageTab, setZooPageTab] = useState("common");
@@ -307,6 +329,8 @@ export default function App() {
   const [battlesCount, setBattlesCount] = useState(0);
   const [inspectingUser, setInspectingUser] = useState(null);
   const [visitors, setVisitors] = useState([]);
+  const [announcement, setAnnouncement] = useState("Selamat datang di Gothic Crimson OwO RPG Simulator!");
+  const [announcementInput, setAnnouncementInput] = useState("");
 
   // Admin and Cheat Settings
   const [infiniteDurability, setInfiniteDurability] = useState(false);
@@ -371,7 +395,7 @@ export default function App() {
   useEffect(() => {
     if (currentUser) {
       const stateObj = {
-        cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, equippedAnimal, animalLevels, animalExp, equippedTitle, battlesCount
+        cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, lastClaimed, equippedAnimal, animalLevels, animalExp, equippedTitle, battlesCount
       };
       
       // 1. Sync to localStorage database
@@ -393,7 +417,7 @@ export default function App() {
         state: stateObj
       });
     }
-  }, [cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, equippedAnimal, animalLevels, animalExp, equippedTitle, battlesCount, currentUser]);
+  }, [cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, lastClaimed, equippedAnimal, animalLevels, animalExp, equippedTitle, battlesCount, currentUser]);
 
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -475,7 +499,7 @@ export default function App() {
   useEffect(() => {
     if (currentUser) {
       const stateObj = {
-        cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, equippedAnimal, animalLevels, animalExp, equippedTitle, battlesCount
+        cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, lastClaimed, equippedAnimal, animalLevels, animalExp, equippedTitle, battlesCount
       };
       
       // 1. Sync to localStorage database
@@ -497,7 +521,7 @@ export default function App() {
         state: stateObj
       });
     }
-  }, [cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, equippedAnimal, animalLevels, animalExp, equippedTitle, battlesCount, currentUser]);
+  }, [cowoncy, exp, level, inventory, activeWeaponIndex, animalsCaught, crates, lootboxes, lastClaimed, equippedAnimal, animalLevels, animalExp, equippedTitle, battlesCount, currentUser]);
 
   const [renameInput, setRenameInput] = useState("");
   const [renameError, setRenameError] = useState("");
@@ -621,6 +645,11 @@ export default function App() {
         setVisitors(vists);
       }
       
+      const ann = await OnlineDB.getAnnouncement();
+      if (ann) {
+        setAnnouncement(ann);
+      }
+      
       const allUsrs = await OnlineDB.getUsers();
       setAllUsers(allUsrs);
       // Sort users by level (descending) and cowoncy (descending) to build a global leaderboard
@@ -643,11 +672,17 @@ export default function App() {
   }, [showGame]);
 
   const addMessage = (author, avatar, isBot, body, embed = null) => {
-    // Generate simplified symbol name for saving to firebase
+    let finalAvatar = "👤";
+    if (isBot) {
+      finalAvatar = "🤖";
+    } else if (currentUser && author === currentUser.username) {
+      finalAvatar = currentUser.isAdmin ? "👑" : "👤";
+    }
+    
     const msgObj = {
       id: Math.random().toString(),
       author,
-      avatar: isBot ? "🤖" : "👤",
+      avatar: finalAvatar,
       isBot,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       body,
@@ -707,15 +742,16 @@ export default function App() {
 
         let currentWeapon = inventory[activeWeaponIndex];
 
-        // Rarity Roll
+        // Rarity Roll with Balanced & Structured RNG
+        // Rates: Common (45%), Uncommon (30%), Rare (15%), Epic (7%), Mythic (2.3%), Legendary (0.5%), Special (0.2%)
         const rand = Math.random() * 100;
         let rarity = "common";
-        if (rand < 0.1) rarity = "special";
-        else if (rand < 1.0) rarity = "legendary";
-        else if (rand < 4.0) rarity = "mythic";
+        if (rand < 0.2) rarity = "special";
+        else if (rand < 0.7) rarity = "legendary";
+        else if (rand < 3.0) rarity = "mythic";
         else if (rand < 10.0) rarity = "epic";
         else if (rand < 25.0) rarity = "rare";
-        else if (rand < 50.0) rarity = "uncommon";
+        else if (rand < 55.0) rarity = "uncommon";
 
         const arr = ANIMALS[rarity];
         const animal = arr[Math.floor(Math.random() * arr.length)];
@@ -809,14 +845,31 @@ export default function App() {
         setBattlesCount(b => b + 1);
 
         const playerWeapon = inventory[activeWeaponIndex];
-        const animalLevelBonus = equippedAnimal ? (animalLevels[equippedAnimal.name] || 1) * 15 : 0;
-        const playerPower = (playerWeapon ? playerWeapon.dmg : 5) + animalLevelBonus;
-        // Balance: Enemy power scales with player level, making it fair at start and scaling up
-        const enemyPower = Math.floor(Math.random() * (10 + level * 5)) + (5 + level * 2);
+        // Animal boost: higher levels and rarity give bigger boosts.
+        let animalBonusMultiplier = 1;
+        if (equippedAnimal) {
+          const r = equippedAnimal.rarity.toLowerCase();
+          if (r === "common") animalBonusMultiplier = 1.2;
+          else if (r === "uncommon") animalBonusMultiplier = 1.5;
+          else if (r === "rare") animalBonusMultiplier = 2.0;
+          else if (r === "epic") animalBonusMultiplier = 2.5;
+          else if (r === "mythic") animalBonusMultiplier = 3.5;
+          else if (r === "legendary") animalBonusMultiplier = 5.0;
+        }
+        const animalLevelBonus = equippedAnimal ? (animalLevels[equippedAnimal.name] || 1) * 8 * animalBonusMultiplier : 0;
+        
+        const rawPower = playerWeapon ? playerWeapon.dmg : 5;
+        // Weapon power scaling: give higher-tier weapons a substantial multiplier boost for victories
+        const playerPower = rawPower + animalLevelBonus;
+        
+        // Enemy scaling: challenge scales moderately, keeping it manageable
+        const enemyPower = Math.floor(Math.random() * (12 + level * 2)) + (5 + level * 1.0);
 
-        const playerRoll = playerPower * (Math.random() * 0.4 + 0.8);
-        const enemyRoll = enemyPower * (Math.random() * 0.4 + 0.8);
+        // Player gets a significant advantage from high power
+        const playerRoll = playerPower * (Math.random() * 0.2 + 0.9);
+        const enemyRoll = enemyPower * (Math.random() * 0.35 + 0.8);
 
+        // Success probability is naturally boosted when power is high compared to enemy
         const isWin = playerRoll >= enemyRoll;
         
         const cowoncyReward = isWin ? Math.floor(Math.random() * 60) + 50 : Math.floor(Math.random() * 15) + 10;
@@ -893,11 +946,14 @@ export default function App() {
         }
         setCrates(c => c - 1);
 
+        // Balanced Crate Open RNG: Epic (35%), Mythic (10%), Legendary (3%), Uncommon/Rare (52%)
         const roll = Math.random() * 100;
         let rarity = "rare";
-        if (roll < 5) rarity = "legendary";
-        else if (roll < 15) rarity = "mythic";
-        else if (roll < 45) rarity = "epic";
+        if (roll < 3.0) rarity = "legendary";
+        else if (roll < 13.0) rarity = "mythic";
+        else if (roll < 48.0) rarity = "epic";
+        else if (roll < 80.0) rarity = "rare";
+        else rarity = "uncommon";
 
         const arr = ANIMALS[rarity];
         const animal = arr[Math.floor(Math.random() * arr.length)];
@@ -1041,12 +1097,30 @@ export default function App() {
           : (isDraw ? `[BLACKJACK] Kartu Anda: **${pVal}** | Kartu Dealer: **${dVal}**. Seri (Push)!` : `[BLACKJACK] Kartu Anda: **${pVal}** | Kartu Dealer: **${dVal}**. Anda Kalah -${bet} 🪙.`)
         );
       }
+      else if (cleanCmd.startsWith("/owo daily") || cleanCmd.startsWith("/owo claim")) {
+        const now = Date.now();
+        const cooldown = 24 * 60 * 60 * 1000; // 24 Hours in milliseconds
+        if (now - lastClaimed < cooldown) {
+          const timeLeft = cooldown - (now - lastClaimed);
+          const hrs = Math.floor(timeLeft / (60 * 60 * 1000));
+          const mins = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
+          addMessage("OwO", <PawIcon />, true, `[DAILY] Cooldown aktif! Harap tunggu ${hrs} jam ${mins} menit lagi sebelum melakukan claim harian.`);
+          return;
+        }
+
+        setLastClaimed(now);
+        setCrates(c => c + 1);
+        setLootboxes(l => l + 1);
+
+        addMessage("OwO", <PawIcon />, true, `[DAILY] Selamat! @User berhasil claim hadiah harian: +1 Animal Crate 📦 dan +1 Lootbox 🎁!`);
+      }
       else if (cleanCmd === "/help") {
         addMessage(
           "System",
           <SystemIcon />,
           false,
           "Daftar perintah simulasi yang tersedia:\n" +
+          "• /owo daily - Claim hadiah harian: 1 Crate & 1 Lootbox (cooldown 24 jam)\n" +
           "• /owo hunt - Berburu hewan liar (cooldown 5s)\n" +
           "• /owo battle - Melawan monster liar (cooldown 15s)\n" +
           "• /owo cf [bet] [h/t] - Coinflip judi koin\n" +
@@ -1115,6 +1189,7 @@ export default function App() {
         setAnimalsCaught(user.state.animalsCaught || {});
         setCrates(user.state.crates);
         setLootboxes(user.state.lootboxes);
+        setLastClaimed(user.state.lastClaimed || 0);
         setEquippedAnimal(user.state.equippedAnimal || null);
         setAnimalLevels(user.state.animalLevels || {});
         setAnimalExp(user.state.animalExp || {});
@@ -1130,6 +1205,7 @@ export default function App() {
         setAnimalsCaught({});
         setCrates(2);
         setLootboxes(2);
+        setLastClaimed(0);
         setEquippedAnimal(null);
         setAnimalLevels({});
         setAnimalExp({});
@@ -1589,25 +1665,60 @@ export default function App() {
               <span className="channel-icon">#</span> owo-commands
             </div>
             
-            <div className="message-list">
+            {announcement && (
+              <div style={{
+                background: "rgba(255, 59, 59, 0.15)",
+                borderBottom: "2px dashed rgba(255, 59, 59, 0.3)",
+                padding: "0.8rem 1rem",
+                color: "#ff8b8b",
+                fontSize: "0.85rem",
+                fontWeight: "700",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                textAlign: "left",
+                animation: "pulse 2s infinite"
+              }}>
+                <span style={{ color: "#ffd60a" }}>📢 PENGUMUMAN:</span>
+                <span>{announcement}</span>
+              </div>
+            )}
+            
+            <div className="message-list" style={{ padding: "1rem" }}>
               {messages.map(msg => (
-                <div className={`message-wrapper ${msg.isBot ? "bot-response" : "user-response"}`} key={msg.id}>
-                  <div className="msg-avatar">{msg.avatar}</div>
-                  <div className="msg-content-wrapper">
-                    <div className="msg-header">
-                      <span className="msg-author">{msg.author}</span>
-                      {msg.isBot && <span className="bot-tag">BOT</span>}
-                      <span className="msg-time">{msg.time}</span>
-                    </div>
-                    <div className="msg-body">{msg.body}</div>
-                    {msg.embed && (
-                      <div className="discord-embed">
-                        {msg.embed.title && <div className="embed-title">{msg.embed.title}</div>}
-                        {msg.embed.description && <div className="embed-desc">{msg.embed.description}</div>}
-                        <div className="embed-footer">GLVS Engine v4.9 • {msg.time}</div>
+                <div 
+                  className={`message-wrapper ${msg.isBot ? "bot-response" : "user-response"}`} 
+                  key={msg.id}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "stretch",
+                    background: msg.isBot ? "rgba(255, 59, 59, 0.05)" : "rgba(30, 2, 2, 0.6)",
+                    border: msg.isBot ? "1px solid rgba(255, 59, 59, 0.25)" : "1px solid #4a1212",
+                    borderRadius: "10px",
+                    padding: "0.8rem 1rem",
+                    marginBottom: "0.8rem",
+                    boxShadow: "0 4px 10px rgba(0,0,0,0.3)"
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", borderBottom: "1px dashed rgba(255,59,59,0.15)", paddingBottom: "0.4rem", marginBottom: "0.5rem" }}>
+                    <div className="msg-avatar" style={{ fontSize: "1.1rem" }}>{msg.avatar}</div>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                        <span className="msg-author" style={{ fontWeight: "700", color: msg.isBot ? "#ff4747" : "#ffd60a", fontSize: "0.85rem" }}>{msg.author}</span>
+                        {msg.isBot && <span className="bot-tag" style={{ background: "#ff3b30", fontSize: "0.6rem", padding: "0.1rem 0.3rem", borderRadius: "3px", fontWeight: "900" }}>BOT</span>}
                       </div>
-                    )}
+                      <span className="msg-time" style={{ fontSize: "0.65rem", color: "#8e8e93" }}>{msg.time}</span>
+                    </div>
                   </div>
+                  <div className="msg-body" style={{ textAlign: "left", fontSize: "0.9rem", color: "#fff", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{msg.body}</div>
+                  {msg.embed && (
+                    <div className="discord-embed" style={{ marginTop: "0.6rem", borderLeft: "3px solid #ff3b3b", background: "rgba(20, 2, 2, 0.8)", padding: "0.8rem", borderRadius: "0 8px 8px 0" }}>
+                      {msg.embed.title && <div className="embed-title" style={{ fontWeight: "700", color: "#ff3b3b", marginBottom: "0.3rem", fontSize: "0.85rem" }}>{msg.embed.title}</div>}
+                      {msg.embed.description && <div className="embed-desc" style={{ fontSize: "0.8rem", color: "#c9b1b1", whiteSpace: "pre-wrap" }}>{msg.embed.description}</div>}
+                      <div className="embed-footer" style={{ fontSize: "0.65rem", color: "#8e8e93", marginTop: "0.4rem", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "0.3rem" }}>GLVS Engine v4.9 • {msg.time}</div>
+                    </div>
+                  )}
                 </div>
               ))}
               <div ref={messageEndRef} />
@@ -1968,6 +2079,33 @@ export default function App() {
             
             {currentUser?.isAdmin ? (
               <>
+                {/* Admin Announcement Editor */}
+                <div style={{ background: "rgba(30, 2, 2, 0.6)", border: "1px solid #701c1c", borderRadius: "12px", padding: "1.2rem", marginBottom: "1.5rem", textAlign: "left" }}>
+                  <h3 style={{ color: "#ffd60a", fontSize: "1rem", margin: "0 0 0.5rem 0" }}>Update Pengumuman Server</h3>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      style={{ flexGrow: 1, padding: "0.6rem 0.9rem", fontSize: "0.85rem" }} 
+                      placeholder="Masukkan pengumuman server..." 
+                      value={announcementInput} 
+                      onChange={(e) => setAnnouncementInput(e.target.value)} 
+                    />
+                    <button 
+                      className="btn-primary" 
+                      style={{ padding: "0.6rem 1.2rem", fontSize: "0.85rem", borderRadius: "10px" }}
+                      onClick={async () => {
+                        if (!announcementInput.trim()) return;
+                        await OnlineDB.saveAnnouncement(announcementInput);
+                        setAnnouncement(announcementInput);
+                        alert("Pengumuman Server Berhasil Diupdate!");
+                      }}
+                    >
+                      Simpan
+                    </button>
+                  </div>
+                </div>
+
                 <div className="admin-grid">
                   {adminFeatures.map(f => (
                     <div className="admin-card" key={f.id}>
@@ -2061,24 +2199,23 @@ export default function App() {
         {!showAuth ? (
           <>
             <section className="landing-hero" style={{ animation: "fadeIn 1s ease-out" }}>
-              <div style={{ color: "#ff3b3b", fontSize: "0.9rem", fontWeight: "800", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: "1rem" }}>
-                🏰 KASTIL BAYANGAN MERAH DARAH
+              <div className="eyebrow" style={{ marginBottom: "1.5rem" }}>
+                Leanian Edition
               </div>
               <h1 className="landing-title" style={{ letterSpacing: "-0.01em", textTransform: "uppercase" }}>
-                Gothic Crimson<br />
-                <span style={{ textShadow: "0 0 30px rgba(255, 59, 59, 0.4)" }}>OwO RPG Simulator</span>
+                Petualangan <span style={{ textShadow: "0 0 30px rgba(255, 59, 59, 0.4)" }}>OwO</span> dimulai dari satu klik.
               </h1>
               <p className="landing-subtitle" style={{ color: "#c9b1b1", maxWidth: "680px", margin: "1.5rem auto 2.5rem auto", fontSize: "1.05rem", lineHeight: "1.7" }}>
-                Selamat datang di kegelapan abadi. Lepaskan diri dari batasan API Discord dan mainkan petualangan berburu gacha RPG OwO dengan visual anime gothic premium yang memikat jiwa.
+                Glvsowogame membawamu ke dunia Leanian — RPG ringan berbasis browser dengan ratusan musuh, sistem hadiah harian, dan pertarungan yang makin seru tiap kamu naik level.
               </p>
               <div className="landing-buttons" style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
                 {currentUser ? (
-                  <button className="btn-primary" style={{ borderRadius: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }} onClick={() => setShowGame(true)}>
-                    Masuki Gerbang Labirin <ArrowRightIcon />
+                  <button className="btn-primary" style={{ borderRadius: "12px", textTransform: "uppercase", letterSpacing: "0.05em", padding: "16px 30px" }} onClick={() => setShowGame(true)}>
+                    Mulai Bertarung ✦
                   </button>
                 ) : (
-                  <button className="btn-primary" style={{ borderRadius: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }} onClick={() => { setShowAuth(true); setAuthError(""); setAuthSuccess(""); }}>
-                    Sambungkan Akses Jiwa <ArrowRightIcon />
+                  <button className="btn-primary" style={{ borderRadius: "12px", textTransform: "uppercase", letterSpacing: "0.05em", padding: "16px 30px" }} onClick={() => { setShowAuth(true); setAuthError(""); setAuthSuccess(""); }}>
+                    Masuk Ke Dunia Leanian <ArrowRightIcon />
                   </button>
                 )}
               </div>
@@ -2325,28 +2462,62 @@ export default function App() {
               {activeChannel}
             </div>
 
-            <div className="message-list">
+            {activeChannel === "owo-commands" && announcement && (
+              <div style={{
+                background: "rgba(255, 59, 59, 0.15)",
+                borderBottom: "2px dashed rgba(255, 59, 59, 0.3)",
+                padding: "0.8rem 1rem",
+                color: "#ff8b8b",
+                fontSize: "0.85rem",
+                fontWeight: "700",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                textAlign: "left",
+                animation: "pulse 2s infinite"
+              }}>
+                <span style={{ color: "#ffd60a" }}>📢 PENGUMUMAN:</span>
+                <span>{announcement}</span>
+              </div>
+            )}
+
+            <div className="message-list" style={{ padding: "1.2rem" }}>
               {activeChannel === "owo-commands" && (
                 <>
                   {messages.map(msg => (
-                    <div className={`message-wrapper ${msg.isBot ? "bot-response" : "user-response"}`} key={msg.id}>
-                      <div className="msg-avatar">{msg.avatar}</div>
-                      <div className="msg-content-wrapper">
-                        <div className="msg-header">
-                          <span className="msg-author">{msg.author}</span>
-                          {msg.isBot && <span className="bot-tag">BOT</span>}
-                          <span className="msg-time">{msg.time}</span>
-                        </div>
-                        <div className="msg-body">{msg.body}</div>
-                        
-                        {msg.embed && (
-                          <div className="discord-embed">
-                            {msg.embed.title && <div className="embed-title">{msg.embed.title}</div>}
-                            {msg.embed.description && <div className="embed-desc">{msg.embed.description}</div>}
-                            <div className="embed-footer">GLVS Engine v4.9 • {msg.time}</div>
+                    <div 
+                      className={`message-wrapper ${msg.isBot ? "bot-response" : "user-response"}`} 
+                      key={msg.id}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "stretch",
+                        background: msg.isBot ? "rgba(255, 59, 59, 0.05)" : "rgba(30, 2, 2, 0.6)",
+                        border: msg.isBot ? "1px solid rgba(255, 59, 59, 0.25)" : "1px solid #4a1212",
+                        borderRadius: "10px",
+                        padding: "0.8rem 1rem",
+                        marginBottom: "0.8rem",
+                        boxShadow: "0 4px 10px rgba(0,0,0,0.3)"
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", borderBottom: "1px dashed rgba(255,59,59,0.15)", paddingBottom: "0.4rem", marginBottom: "0.5rem" }}>
+                        <div className="msg-avatar" style={{ fontSize: "1.1rem" }}>{msg.avatar}</div>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                            <span className="msg-author" style={{ fontWeight: "700", color: msg.isBot ? "#ff4747" : "#ffd60a", fontSize: "0.85rem" }}>{msg.author}</span>
+                            {msg.isBot && <span className="bot-tag" style={{ background: "#ff3b30", fontSize: "0.6rem", padding: "0.1rem 0.3rem", borderRadius: "3px", fontWeight: "900" }}>BOT</span>}
                           </div>
-                        )}
+                          <span className="msg-time" style={{ fontSize: "0.65rem", color: "#8e8e93" }}>{msg.time}</span>
+                        </div>
                       </div>
+                      <div className="msg-body" style={{ textAlign: "left", fontSize: "0.9rem", color: "#fff", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{msg.body}</div>
+                      {msg.embed && (
+                        <div className="discord-embed" style={{ marginTop: "0.6rem", borderLeft: "3px solid #ff3b3b", background: "rgba(20, 2, 2, 0.8)", padding: "0.8rem", borderRadius: "0 8px 8px 0" }}>
+                          {msg.embed.title && <div className="embed-title" style={{ fontWeight: "700", color: "#ff3b3b", marginBottom: "0.3rem", fontSize: "0.85rem" }}>{msg.embed.title}</div>}
+                          {msg.embed.description && <div className="embed-desc" style={{ fontSize: "0.8rem", color: "#c9b1b1", whiteSpace: "pre-wrap" }}>{msg.embed.description}</div>}
+                          <div className="embed-footer" style={{ fontSize: "0.65rem", color: "#8e8e93", marginTop: "0.4rem", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "0.3rem" }}>GLVS Engine v4.9 • {msg.time}</div>
+                        </div>
+                      )}
                     </div>
                   ))}
                   <div ref={messageEndRef} />
@@ -2504,13 +2675,13 @@ export default function App() {
               <div className="wiki-list">
                 <div style={{ padding: "0.5rem", background: "rgba(255, 59, 59, 0.08)", border: "1px solid rgba(255, 59, 59, 0.2)", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.8rem", color: "#c9b1b1", textAlign: "left" }}>
                   <strong>RNG HUNT RATES (WIKI):</strong><br />
-                  • Common: 50.0%<br />
-                  • Uncommon: 25.0%<br />
+                  • Common: 45.0%<br />
+                  • Uncommon: 30.0%<br />
                   • Rare: 15.0%<br />
-                  • Epic: 6.0%<br />
-                  • Mythic: 3.0%<br />
-                  • Legendary: 0.9%<br />
-                  • Special Event: 0.1%
+                  • Epic: 7.0%<br />
+                  • Mythic: 2.3%<br />
+                  • Legendary: 0.5%<br />
+                  • Special Event: 0.2%
                 </div>
                 {Object.keys(ANIMALS).map(rarity => 
                   ANIMALS[rarity].map(ani => (
