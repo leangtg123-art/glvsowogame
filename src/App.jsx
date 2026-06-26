@@ -1899,42 +1899,45 @@ export default function App() {
 
         {!showAuth ? (
           <>
-            <section className="landing-hero">
-              <h1 className="landing-title">
-                Gothic Crimson <br />
-                <span>OwO Bot Web Simulator</span>
+            <section className="landing-hero" style={{ animation: "fadeIn 1s ease-out" }}>
+              <div style={{ color: "#ff3b3b", fontSize: "0.9rem", fontWeight: "800", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: "1rem" }}>
+                🏰 KASTIL BAYANGAN MERAH DARAH
+              </div>
+              <h1 className="landing-title" style={{ letterSpacing: "-0.01em", textTransform: "uppercase" }}>
+                Gothic Crimson<br />
+                <span style={{ textShadow: "0 0 30px rgba(255, 59, 59, 0.4)" }}>OwO RPG Simulator</span>
               </h1>
-              <p className="landing-subtitle">
-                Rasakan simulasi RPG teks & gacha OwO Bot dalam tema anime gelap eksklusif. Dibangun dengan layout responsif khusus layar ponsel pintar.
+              <p className="landing-subtitle" style={{ color: "#c9b1b1", maxWidth: "680px", margin: "1.5rem auto 2.5rem auto", fontSize: "1.05rem", lineHeight: "1.7" }}>
+                Selamat datang di kegelapan abadi. Lepaskan diri dari batasan API Discord dan mainkan petualangan berburu gacha RPG OwO dengan visual anime gothic premium yang memikat jiwa.
               </p>
-              <div className="landing-buttons">
+              <div className="landing-buttons" style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
                 {currentUser ? (
-                  <button className="btn-primary" onClick={() => setShowGame(true)}>
-                    Mulai Petualangan <ArrowRightIcon />
+                  <button className="btn-primary" style={{ borderRadius: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }} onClick={() => setShowGame(true)}>
+                    Masuki Gerbang Labirin <ArrowRightIcon />
                   </button>
                 ) : (
-                  <button className="btn-primary" onClick={() => { setShowAuth(true); setAuthError(""); setAuthSuccess(""); }}>
-                    Masuk Akun / Main <ArrowRightIcon />
+                  <button className="btn-primary" style={{ borderRadius: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }} onClick={() => { setShowAuth(true); setAuthError(""); setAuthSuccess(""); }}>
+                    Sambungkan Akses Jiwa <ArrowRightIcon />
                   </button>
                 )}
               </div>
             </section>
 
-            <div className="landing-features">
-              <div className="feature-card">
-                <div className="feature-icon-wrapper"><PawIcon /></div>
-                <h3 className="feature-title">Perburuan Senyap</h3>
-                <p className="feature-desc">Kumpulkan puluhan spesies hewan unik di database perburuan owo tanpa batasan rumit Discord.</p>
+            <div className="landing-features" style={{ marginTop: "5rem" }}>
+              <div className="feature-card" style={{ border: "1px solid rgba(255, 59, 59, 0.15)", background: "rgba(12, 1, 1, 0.8)", borderRadius: "12px" }}>
+                <div className="feature-icon-wrapper" style={{ background: "rgba(255, 59, 59, 0.05)" }}><PawIcon /></div>
+                <h3 className="feature-title" style={{ fontFamily: "'Humane', sans-serif", fontSize: "2rem", color: "#ff3b3b", textTransform: "uppercase", margin: "0.5rem 0" }}>Ritual Perburuan</h3>
+                <p className="feature-desc" style={{ color: "#c9b1b1" }}>Jelajahi kegelapan rimba fantasi untuk mengoleksi puluhan makhluk mitologi purba berdasar persentase RNG orisinal.</p>
               </div>
-              <div className="feature-card">
-                <div className="feature-icon-wrapper"><SwordsIcon /></div>
-                <h3 className="feature-title">Pertarungan Arena</h3>
-                <p className="feature-desc">Gunakan koleksi persenjataan Anda untuk mengalahkan monster liar dan raih level tertinggi.</p>
+              <div className="feature-card" style={{ border: "1px solid rgba(255, 59, 59, 0.15)", background: "rgba(12, 1, 1, 0.8)", borderRadius: "12px" }}>
+                <div className="feature-icon-wrapper" style={{ background: "rgba(255, 59, 59, 0.05)" }}><SwordsIcon /></div>
+                <h3 className="feature-title" style={{ fontFamily: "'Humane', sans-serif", fontSize: "2rem", color: "#ff3b3b", textTransform: "uppercase", margin: "0.5rem 0" }}>Pertempuran Jiwa</h3>
+                <p className="feature-desc" style={{ color: "#c9b1b1" }}>Uji kesaktian pedang aktif Anda. Berduel menghadapi monster purba dengan sistem kalkulasi level yang seimbang.</p>
               </div>
-              <div className="feature-card">
-                <div className="feature-icon-wrapper"><ShopIcon /></div>
-                <h3 className="feature-title">Pasar gelap</h3>
-                <p className="feature-desc">Beli persenjataan tajam, buka peti misterius, dan kelola ransel inventaris Anda.</p>
+              <div className="feature-card" style={{ border: "1px solid rgba(255, 59, 59, 0.15)", background: "rgba(12, 1, 1, 0.8)", borderRadius: "12px" }}>
+                <div className="feature-icon-wrapper" style={{ background: "rgba(255, 59, 59, 0.05)" }}><ShopIcon /></div>
+                <h3 className="feature-title" style={{ fontFamily: "'Humane', sans-serif", fontSize: "2rem", color: "#ff3b3b", textTransform: "uppercase", margin: "0.5rem 0" }}>Pasar Gelap Kastil</h3>
+                <p className="feature-desc" style={{ color: "#c9b1b1" }}>Beli senjata magis legendaris, buka peti pusaka, dan kelola kekayaan Cowoncy Anda secara realtime.</p>
               </div>
             </div>
           </>
