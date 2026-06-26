@@ -1177,7 +1177,7 @@ export default function App() {
   };
 
   // Auth Submit Handlers
-  const handleAuthSubmit = (e) => {
+  const handleAuthSubmit = async (e) => {
     e.preventDefault();
     setAuthError("");
     setAuthSuccess("");
@@ -1187,7 +1187,24 @@ export default function App() {
       return;
     }
 
-    const db = getUsersDb();
+    // Force pull and merge cloud database records before evaluating auth
+    let db = getUsersDb();
+    try {
+      const cloudUsers = await OnlineDB.getUsers();
+      const mergedDb = [...db];
+      cloudUsers.forEach(cu => {
+        const matchIdx = mergedDb.findIndex(u => u.username === cu.username);
+        if (matchIdx !== -1) {
+          mergedDb[matchIdx] = cu;
+        } else {
+          mergedDb.push(cu);
+        }
+      });
+      db = mergedDb;
+      saveUserDb(db);
+    } catch (err) {
+      console.warn("Realtime db pull sync failed: ", err);
+    }
 
     if (authTab === "login") {
       const user = db.find(u => u.username === usernameInput && u.password === passwordInput);
@@ -1250,6 +1267,18 @@ export default function App() {
       };
       db.push(newUser);
       saveUserDb(db);
+      
+      // Save newly registered user to Firebase Online Realtime DB immediately
+      try {
+        await OnlineDB.saveUser(usernameInput, {
+          password: passwordInput,
+          isAdmin: newUser.isAdmin,
+          state: {}
+        });
+      } catch (e) {
+        console.error(e);
+      }
+
       setAuthSuccess("Pendaftaran berhasil! Silakan login.");
       setAuthTab("login");
     }
