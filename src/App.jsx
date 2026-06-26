@@ -3,6 +3,113 @@ import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 import { ANIMALS, WEAPONS, SHOP_ITEMS } from "./owo_data";
 
+// Custom SVG Icons - Clean, stylized paths to replace emojis
+const PawIcon = () => (
+  <svg className="wiki-name-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 14c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3z" />
+    <path d="M7 9c.83 0 1.5-.67 1.5-1.5S7.83 6 7 6s-1.5.67-1.5 1.5S6.17 9 7 9z" />
+    <path d="M17 9c.83 0 1.5-.67 1.5-1.5S17.83 6 17 6s-1.5.67-1.5 1.5S16.17 9 17 9z" />
+    <path d="M4 13c.83 0 1.5-.67 1.5-1.5S4.83 10 4 10s-1.5.67-1.5 1.5S3.17 13 4 13z" />
+    <path d="M20 13c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5z" />
+  </svg>
+);
+
+const SwordsIcon = () => (
+  <svg className="wiki-name-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
+    <line x1="13" y1="19" x2="19" y2="13" />
+    <line x1="16" y1="16" x2="20" y2="20" />
+    <polyline points="9.5 17.5 21 6 21 3 18 3 6.5 14.5" />
+    <line x1="11" y1="19" x2="5" y2="13" />
+  </svg>
+);
+
+const BagIcon = () => (
+  <svg className="wiki-name-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 20V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+    <path d="M9 6V4a3 3 0 0 1 6 0v2" />
+    <line x1="4" y1="11" x2="20" y2="11" />
+  </svg>
+);
+
+const ShopIcon = () => (
+  <svg className="wiki-name-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="9" cy="21" r="1" />
+    <circle cx="20" cy="21" r="1" />
+    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+  </svg>
+);
+
+const CrateIcon = () => (
+  <svg className="wiki-name-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+    <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+  </svg>
+);
+
+const LootboxIcon = () => (
+  <svg className="wiki-name-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 12v10H4V12" />
+    <path d="M2 7h20v5H2z" />
+    <path d="M12 22V7" />
+    <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+    <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+  </svg>
+);
+
+const CoinsIcon = () => (
+  <svg className="wiki-name-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: "#ffd60a"}}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 8v8" />
+    <path d="M9.5 10h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4" />
+  </svg>
+);
+
+const HomeIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <polyline points="9 22 9 12 15 12 15 22" />
+  </svg>
+);
+
+const SystemIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  </svg>
+);
+
+const UserIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
+const ArrowRightIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12" />
+    <polyline points="12 5 19 12 12 19" />
+  </svg>
+);
+
+const BookIcon = () => (
+  <svg className="wiki-name-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z" />
+  </svg>
+);
+
+const TrophyIcon = () => (
+  <svg className="wiki-name-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+    <path d="M4 22h16" />
+    <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34" />
+    <path d="M12 2a6 6 0 0 1 6 6v5a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8a6 6 0 0 1 6-6z" />
+  </svg>
+);
+
 export default function App() {
   const [showGame, setShowGame] = useState(false);
   
@@ -11,7 +118,7 @@ export default function App() {
   const [exp, setExp] = useState(0);
   const [level, setLevel] = useState(1);
   const [inventory, setInventory] = useState([
-    { ...WEAPONS[0], currentDurability: WEAPONS[0].durability }, // Starter Bronze Sword
+    { ...WEAPONS[0], currentDurability: WEAPONS[0].durability },
   ]);
   const [activeWeaponIndex, setActiveWeaponIndex] = useState(0);
   const [animalsCaught, setAnimalsCaught] = useState({});
@@ -25,7 +132,6 @@ export default function App() {
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [activeWikiTab, setActiveWikiTab] = useState("animals");
   const [cooldowns, setCooldowns] = useState({ hunt: 0, battle: 0 });
-  const [sysStatus, setSysStatus] = useState("CONNECTED");
 
   const messageEndRef = useRef(null);
 
@@ -48,15 +154,15 @@ export default function App() {
       }
     }
 
-    // Set welcome message
+    // Set welcome message with SVG SystemIcon instead of system emoji
     setMessages([
       {
         id: "sys-1",
         author: "System",
-        avatar: "⚙️",
+        avatar: <SystemIcon />,
         isBot: false,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        body: "Selamat datang di OwO Discord Bot Web Simulator! Ketik `/owo hunt` untuk mulai berburu hewan, atau ketik `/help` untuk bantuan perintah."
+        body: "Selamat datang di OwO Discord Bot Web Simulator! Ketik /owo hunt untuk mulai berburu hewan, atau ketik /help untuk bantuan perintah."
       }
     ]);
   }, []);
@@ -112,12 +218,12 @@ export default function App() {
       currentLevel += 1;
       addMessage(
         "OwO",
-        "🦉",
+        <PawIcon />,
         true,
-        `🎉 **CONGRATULATIONS!** @User telah naik ke **Level ${currentLevel}**!`,
+        `[LEVEL UP] @User telah naik ke Level ${currentLevel}!`,
         {
           title: "Level Up! 🌟",
-          description: `Selamat! Kamu naik ke level **${currentLevel}**.\nBatas Exp baru: **${currentLevel * 150}**.\nBonus +500 Cowoncy ditambahkan ke saldo Anda!`
+          description: `Selamat! Kamu naik ke level ${currentLevel}.\nBatas Exp baru: ${currentLevel * 150}.\nBonus +500 Cowoncy ditambahkan ke saldo Anda!`
         }
       );
       setCowoncy(c => c + 500);
@@ -130,16 +236,16 @@ export default function App() {
     const cleanCmd = cmdText.trim().toLowerCase();
     
     // Echo user's message
-    addMessage("User", "👤", false, cmdText);
+    addMessage("User", <UserIcon />, false, cmdText);
 
     // Parse commands
     if (cleanCmd.startsWith("/owo hunt")) {
       if (cooldowns.hunt > 0) {
         addMessage(
           "OwO",
-          "🦉",
+          <PawIcon />,
           true,
-          `⚠️ **Cooldown!** Harap tunggu **${cooldowns.hunt} detik** sebelum berburu lagi.`
+          `[COOLDOWN] Harap tunggu ${cooldowns.hunt} detik sebelum berburu lagi.`
         );
         return;
       }
@@ -147,12 +253,7 @@ export default function App() {
       // Execute hunt logic
       setCooldowns(prev => ({ ...prev, hunt: 5 }));
 
-      // Weapon durability check
       let currentWeapon = inventory[activeWeaponIndex];
-      let damageBonus = 0;
-      if (currentWeapon) {
-        damageBonus = currentWeapon.dmg;
-      }
 
       // Rarity Roll
       const rand = Math.random() * 100;
@@ -186,7 +287,7 @@ export default function App() {
           weapon.currentDurability -= 1;
           
           if (weapon.currentDurability <= 0) {
-            addMessage("OwO", "🦉", true, `💔 Senjata **${weapon.name}** Anda telah rusak akibat pertempuran!`);
+            addMessage("OwO", <PawIcon />, true, `[BROKEN] Senjata ${weapon.name} Anda telah rusak!`);
             updated.splice(activeWeaponIndex, 1);
             setActiveWeaponIndex(0);
           } else {
@@ -198,12 +299,12 @@ export default function App() {
 
       addMessage(
         "OwO",
-        "🦉",
+        <PawIcon />,
         true,
-        `🐾 **@User** pergi berburu dan menangkap seekor **${animal.emoji} ${animal.name}** (${animal.rarity})!`,
+        `[HUNT] @User pergi berburu dan menangkap seekor ${animal.name} (${animal.rarity})!`,
         {
           title: "Hasil Perburuan 🌲",
-          description: `**Hewan**: ${animal.emoji} ${animal.name} (${animal.rarity})\n**Hadiah**: +${cowoncyEarned} Cowoncy 🪙\n**Exp**: +${expEarned} XP ⭐\n\n*Senjata Aktif: ${currentWeapon ? `${currentWeapon.name} (Durability: ${currentWeapon.currentDurability - 1}/${currentWeapon.durability})` : "Tanpa Senjata"}*`
+          description: `Hewan: ${animal.name} (${animal.rarity})\nHadiah: +${cowoncyEarned} Cowoncy\nExp: +${expEarned} XP\n\nSenjata Aktif: ${currentWeapon ? `${currentWeapon.name} (Durability: ${currentWeapon.currentDurability - 1}/${currentWeapon.durability})` : "Tanpa Senjata"}`
         }
       );
 
@@ -213,9 +314,9 @@ export default function App() {
       if (cooldowns.battle > 0) {
         addMessage(
           "OwO",
-          "🦉",
+          <PawIcon />,
           true,
-          `⚠️ **Cooldown!** Harap tunggu **${cooldowns.battle} detik** sebelum bertarung lagi.`
+          `[COOLDOWN] Harap tunggu ${cooldowns.battle} detik sebelum bertarung lagi.`
         );
         return;
       }
@@ -239,14 +340,14 @@ export default function App() {
 
       addMessage(
         "OwO",
-        "🦉",
+        <PawIcon />,
         true,
         isWin 
-          ? `⚔️ **@User** memenangkan pertarungan melawan monster liar!` 
-          : `⚔️ **@User** kalah dalam pertarungan melawan monster liar.`,
+          ? `[BATTLE] @User memenangkan pertarungan melawan monster liar!` 
+          : `[BATTLE] @User kalah dalam pertarungan melawan monster liar.`,
         {
           title: isWin ? "Victory! 🏆" : "Defeat! 💀",
-          description: `**Kekuatan Anda**: ${playerRoll.toFixed(1)} DMG (Weapon: ${playerWeapon ? playerWeapon.name : "Fists"})\n**Kekuatan Monster**: ${enemyRoll.toFixed(1)} DMG\n\n**Hasil**: ${isWin ? "Menang!" : "Kalah"}\n**Hadiah**: +${cowoncyReward} Cowoncy 🪙\n**Exp**: +${expReward} XP ⭐`
+          description: `Kekuatan Anda: ${playerRoll.toFixed(1)} DMG\nKekuatan Monster: ${enemyRoll.toFixed(1)} DMG\n\nHasil: ${isWin ? "Menang!" : "Kalah"}\nHadiah: +${cowoncyReward} Cowoncy\nExp: +${expReward} XP`
         }
       );
 
@@ -255,31 +356,31 @@ export default function App() {
     else if (cleanCmd.startsWith("/owo shop")) {
       addMessage(
         "OwO",
-        "🦉",
+        <PawIcon />,
         true,
-        "🛒 **OwO Marketplace** - Ketik `/owo buy [nama_id]` untuk membeli item.",
+        "Shop Marketplace - Ketik /owo buy [nama_id] untuk membeli.",
         {
           title: "Daftar Toko Senjata & Item",
-          description: SHOP_ITEMS.map(item => `• **${item.name}** (\`${item.id}\`): ${item.price} Cowoncy ${item.dmg ? `| Dmg: ${item.dmg}` : ""}`).join("\n")
+          description: SHOP_ITEMS.map(item => `• ${item.name} (${item.id}): ${item.price} Cowoncy ${item.dmg ? `| Dmg: ${item.dmg}` : ""}`).join("\n")
         }
       );
     }
     else if (cleanCmd.startsWith("/owo buy")) {
       const parts = cleanCmd.split(" ");
       if (parts.length < 3) {
-        addMessage("OwO", "🦉", true, "⚠️ Format pembelian salah! Gunakan: `/owo buy [item_id]`");
+        addMessage("OwO", <PawIcon />, true, "Format pembelian salah! Gunakan: /owo buy [item_id]");
         return;
       }
       const itemId = parts[2];
       const item = SHOP_ITEMS.find(i => i.id === itemId);
 
       if (!item) {
-        addMessage("OwO", "🦉", true, `❌ Item dengan ID \`${itemId}\` tidak ditemukan.`);
+        addMessage("OwO", <PawIcon />, true, `Item dengan ID ${itemId} tidak ditemukan.`);
         return;
       }
 
       if (cowoncy < item.price) {
-        addMessage("OwO", "🦉", true, `❌ Saldo Cowoncy tidak cukup! Anda butuh **${item.price}** Cowoncy.`);
+        addMessage("OwO", <PawIcon />, true, `Saldo Cowoncy tidak cukup! Anda butuh ${item.price} Cowoncy.`);
         return;
       }
 
@@ -287,27 +388,25 @@ export default function App() {
 
       if (itemId === "crate") {
         setCrates(c => c + 1);
-        addMessage("OwO", "🦉", true, `📦 Berhasil membeli **1 Animal Crate**!`);
+        addMessage("OwO", <PawIcon />, true, `Berhasil membeli 1 Animal Crate!`);
       } else if (itemId === "lootbox") {
         setLootboxes(l => l + 1);
-        addMessage("OwO", "🦉", true, `🎁 Berhasil membeli **1 Lootbox**!`);
+        addMessage("OwO", <PawIcon />, true, `Berhasil membeli 1 Lootbox!`);
       } else {
-        // Weapon
         setInventory(prev => [
           ...prev,
           { ...item, currentDurability: item.durability }
         ]);
-        addMessage("OwO", "🦉", true, `⚔️ Berhasil membeli senjata **${item.name}**!`);
+        addMessage("OwO", <PawIcon />, true, `Berhasil membeli senjata ${item.name}!`);
       }
     }
     else if (cleanCmd.startsWith("/owo open crate")) {
       if (crates <= 0) {
-        addMessage("OwO", "🦉", true, "❌ Anda tidak memiliki Animal Crate. Beli di `/owo shop`!");
+        addMessage("OwO", <PawIcon />, true, "Anda tidak memiliki Animal Crate. Beli di /owo shop!");
         return;
       }
       setCrates(c => c - 1);
 
-      // Unbox animal
       const roll = Math.random() * 100;
       let rarity = "rare";
       if (roll < 5) rarity = "legendary";
@@ -324,114 +423,101 @@ export default function App() {
 
       addMessage(
         "OwO",
-        "🦉",
+        <PawIcon />,
         true,
-        `📦 **@User** membuka **Animal Crate** dan mendapatkan:`,
+        `[CRATE] @User membuka Animal Crate dan mendapatkan:`,
         {
           title: `Selamat! 🎉`,
-          description: `Kamu mendapatkan **${animal.emoji} ${animal.name}** (${animal.rarity}) dari crate!`
+          description: `Kamu mendapatkan ${animal.name} (${animal.rarity}) dari crate!`
         }
       );
     }
     else if (cleanCmd.startsWith("/owo open lootbox")) {
       if (lootboxes <= 0) {
-        addMessage("OwO", "🦉", true, "❌ Anda tidak memiliki Lootbox. Beli di `/owo shop`!");
+        addMessage("OwO", <PawIcon />, true, "Anda tidak memiliki Lootbox. Beli di /owo shop!");
         return;
       }
       setLootboxes(l => l - 1);
 
       const roll = Math.random();
       if (roll < 0.4) {
-        // Gain Cowoncy
         const cash = Math.floor(Math.random() * 800) + 300;
         setCowoncy(c => c + cash);
-        addMessage("OwO", "🦉", true, `🎁 Kamu membuka **Lootbox** dan memenangkan **${cash} Cowoncy**!`);
+        addMessage("OwO", <PawIcon />, true, `[LOOTBOX] Kamu membuka Lootbox dan memenangkan ${cash} Cowoncy!`);
       } else {
-        // Gain random weapon
         const weapon = WEAPONS[Math.floor(Math.random() * WEAPONS.length)];
         setInventory(prev => [
           ...prev,
           { ...weapon, currentDurability: weapon.durability }
         ]);
-        addMessage("OwO", "🦉", true, `🎁 Kamu membuka **Lootbox** dan mendapatkan senjata **${weapon.name}**!`);
+        addMessage("OwO", <PawIcon />, true, `[LOOTBOX] Kamu membuka Lootbox dan mendapatkan senjata ${weapon.name}!`);
       }
     }
     else if (cleanCmd.startsWith("/owo inv") || cleanCmd.startsWith("/owo inventory")) {
       addMessage(
         "OwO",
-        "🦉",
+        <PawIcon />,
         true,
-        "🎒 **Ransel & Inventaris Anda**",
+        "Ransel & Inventaris Anda",
         {
           title: "Isi Ransel",
-          description: `• **Cowoncy**: ${cowoncy} 🪙\n• **Animal Crates**: ${crates} 📦\n• **Lootboxes**: ${lootboxes} 🎁\n\n**Daftar Senjata Anda:**\n${inventory.map((w, idx) => `${idx === activeWeaponIndex ? "👉" : "•"} [${idx}] **${w.name}** (${w.currentDurability}/${w.durability} Durability) | DMG: ${w.dmg}`).join("\n")}\n\n*Ketik \`/owo equip [nomor]\` untuk mengganti senjata aktif.*`
+          description: `Cowoncy: ${cowoncy}\nAnimal Crates: ${crates}\nLootboxes: ${lootboxes}\n\nDaftar Senjata Anda:\n${inventory.map((w, idx) => `${idx === activeWeaponIndex ? ">> " : "• "} [${idx}] ${w.name} (${w.currentDurability}/${w.durability} Durability) | DMG: ${w.dmg}`).join("\n")}\n\nKetik /owo equip [nomor] untuk mengganti senjata aktif.`
         }
       );
     }
     else if (cleanCmd.startsWith("/owo equip")) {
       const parts = cleanCmd.split(" ");
       if (parts.length < 3) {
-        addMessage("OwO", "🦉", true, "⚠️ Format salah! Gunakan: `/owo equip [indeks_senjata]`");
+        addMessage("OwO", <PawIcon />, true, "Format salah! Gunakan: /owo equip [indeks_senjata]");
         return;
       }
       const index = parseInt(parts[2]);
       if (isNaN(index) || index < 0 || index >= inventory.length) {
-        addMessage("OwO", "🦉", true, "❌ Indeks senjata tidak valid.");
+        addMessage("OwO", <PawIcon />, true, "Indeks senjata tidak valid.");
         return;
       }
       setActiveWeaponIndex(index);
-      addMessage("OwO", "🦉", true, `✅ Berhasil menggunakan senjata **${inventory[index].name}**!`);
+      addMessage("OwO", <PawIcon />, true, `Berhasil menggunakan senjata ${inventory[index].name}!`);
     }
     else if (cleanCmd.startsWith("/owo zoo")) {
       const list = Object.keys(animalsCaught)
-        .map(name => {
-          // Find emoji from ANIMALS lists
-          let emoji = "🐾";
-          for (const key in ANIMALS) {
-            const found = ANIMALS[key].find(a => a.name === name);
-            if (found) {
-              emoji = found.emoji;
-              break;
-            }
-          }
-          return `• ${emoji} **${name}** (x${animalsCaught[name]})`;
-        })
+        .map(name => `• ${name} (x${animalsCaught[name]})`)
         .join("\n");
 
       addMessage(
         "OwO",
-        "🦉",
+        <PawIcon />,
         true,
-        "🦁 **Kebun Binatang Anda (Zoo)**",
+        "Kebun Binatang Anda (Zoo)",
         {
           title: "Koleksi Hewan Anda",
-          description: list || "*Kebun binatang Anda masih kosong. Mulai berburu dengan `/owo hunt`!*"
+          description: list || "Kebun binatang Anda masih kosong. Mulai berburu dengan /owo hunt!"
         }
       );
     }
     else if (cleanCmd === "/help") {
       addMessage(
         "System",
-        "⚙️",
+        <SystemIcon />,
         false,
         "Daftar perintah simulasi yang tersedia:\n" +
-        "• `/owo hunt` - Berburu hewan liar (cooldown 5s)\n" +
-        "• `/owo battle` - Melawan monster liar (cooldown 15s)\n" +
-        "• `/owo inv` - Melihat isi ransel dan senjata\n" +
-        "• `/owo zoo` - Menampilkan daftar hewan yang sudah ditangkap\n" +
-        "• `/owo shop` - Membuka toko senjata dan item\n" +
-        "• `/owo buy [item_id]` - Membeli senjata atau item\n" +
-        "• `/owo equip [nomor]` - Memasang senjata pilihan\n" +
-        "• `/owo open crate` - Membuka peti hewan acak\n" +
-        "• `/owo open lootbox` - Membuka kotak rampasan misterius"
+        "• /owo hunt - Berburu hewan liar (cooldown 5s)\n" +
+        "• /owo battle - Melawan monster liar (cooldown 15s)\n" +
+        "• /owo inv - Melihat isi ransel dan senjata\n" +
+        "• /owo zoo - Menampilkan daftar hewan yang sudah ditangkap\n" +
+        "• /owo shop - Membuka toko senjata dan item\n" +
+        "• /owo buy [item_id] - Membeli senjata atau item\n" +
+        "• /owo equip [nomor] - Memasang senjata pilihan\n" +
+        "• /owo open crate - Membuka peti hewan acak\n" +
+        "• /owo open lootbox - Membuka kotak rampasan misterius"
       );
     }
     else {
       addMessage(
         "System",
-        "⚙️",
+        <SystemIcon />,
         false,
-        `❌ Perintah tidak dikenal: \`${cmdText}\`. Silakan ketik \`/help\` untuk melihat daftar perintah.`
+        `Perintah tidak dikenal: ${cmdText}. Silakan ketik /help untuk melihat daftar perintah.`
       );
     }
   };
@@ -460,7 +546,6 @@ export default function App() {
     setShowAutocomplete(false);
   };
 
-  // Render total animals caught count
   const totalAnimalsCount = Object.values(animalsCaught).reduce((a, b) => a + b, 0);
 
   if (!showGame) {
@@ -468,46 +553,43 @@ export default function App() {
       <div className="landing-container">
         <header className="landing-header">
           <div className="landing-logo">
-            🐾 <span>OwO</span> Simulator
+            <span>GLVS</span> OWOGAME
           </div>
           <button className="btn-secondary" onClick={() => setShowGame(true)}>
-            Masuk Simulator
+            Masuk Terminal
           </button>
         </header>
 
         <section className="landing-hero">
           <h1 className="landing-title">
-            Mainkan Game OwO Bot <br />
-            <span>Tanpa Ribet di Discord!</span>
+            Gothic Crimson <br />
+            <span>OwO Bot Web Simulator</span>
           </h1>
           <p className="landing-subtitle">
-            Simulasi game gacha & RPG teks OwO Bot terlengkap dengan antarmuka Discord obsidian yang premium, responsif, dan kaya fitur secara instan.
+            Rasakan simulasi RPG teks & gacha OwO Bot dalam tema anime gelap eksklusif. Dibangun dengan layout responsif khusus layar ponsel pintar.
           </p>
           <div className="landing-buttons">
             <button className="btn-primary" onClick={() => setShowGame(true)}>
-              🚀 Mulai Bermain Sekarang
+              Mulai Petualangan <ArrowRightIcon />
             </button>
-            <a href="https://github.com/leangtg123-art/owo-discord-bot-clone" target="_blank" rel="noopener noreferrer" className="btn-secondary">
-              ⭐ Buka GitHub Repository
-            </a>
           </div>
         </section>
 
         <div className="landing-features">
           <div className="feature-card">
-            <div className="feature-icon">🐾</div>
-            <h3 className="feature-title">Perburuan Instan</h3>
-            <p className="feature-desc">Ketik atau klik tombol `/owo hunt` untuk menangkap puluhan spesies hewan unik dari Common hingga Legendary.</p>
+            <div className="feature-icon-wrapper"><PawIcon /></div>
+            <h3 className="feature-title">Perburuan Senyap</h3>
+            <p className="feature-desc">Kumpulkan puluhan spesies hewan unik di database perburuan owo tanpa batasan rumit Discord.</p>
           </div>
           <div className="feature-card">
-            <div className="feature-icon">⚔️</div>
-            <h3 className="feature-title">Pertarungan Sengit</h3>
-            <p className="feature-desc">Gunakan persenjataan premium untuk meningkatkan serangan Anda dan kalahkan monster liar di `/owo battle`.</p>
+            <div className="feature-icon-wrapper"><SwordsIcon /></div>
+            <h3 className="feature-title">Pertarungan Arena</h3>
+            <p className="feature-desc">Gunakan koleksi persenjataan Anda untuk mengalahkan monster liar dan raih level tertinggi.</p>
           </div>
           <div className="feature-card">
-            <div className="feature-icon">🛒</div>
-            <h3 className="feature-title">Toko & Koleksi</h3>
-            <p className="feature-desc">Beli berbagai tingkatan senjata, unbox peti misterius, dan pamerkan seluruh tangkapan Anda di `/owo zoo`.</p>
+            <div className="feature-icon-wrapper"><ShopIcon /></div>
+            <h3 className="feature-title">Pasar gelap</h3>
+            <p className="feature-desc">Beli persenjataan tajam, buka peti misterius, dan kelola ransel inventaris Anda.</p>
           </div>
         </div>
       </div>
@@ -519,22 +601,22 @@ export default function App() {
       {/* Column 1: Left Channels Sidebar */}
       <div className="panel-left">
         <div className="panel-header">
-          🏢 Server Simulator OwO
+          🏛️ GLVS OWOGAME
         </div>
         
         <div className="channel-list">
-          <div className="channel-category">Informasi</div>
+          <div className="channel-category">Panduan</div>
           <div 
             className={`channel-item ${activeChannel === "tutorial" ? "active" : ""}`}
             onClick={() => setActiveChannel("tutorial")}
           >
-            <span className="channel-icon">📢</span> #tutorial-dan-panduan
+            <span className="channel-icon"><BookIcon /></span> #tutorial
           </div>
           <div 
             className={`channel-item ${activeChannel === "leaderboard" ? "active" : ""}`}
             onClick={() => setActiveChannel("leaderboard")}
           >
-            <span className="channel-icon">🏆</span> #papan-peringkat
+            <span className="channel-icon"><TrophyIcon /></span> #leaderboard
           </div>
 
           <div className="channel-category">Simulasi Chat</div>
@@ -542,23 +624,23 @@ export default function App() {
             className={`channel-item ${activeChannel === "owo-commands" ? "active" : ""}`}
             onClick={() => setActiveChannel("owo-commands")}
           >
-            <span className="channel-icon">💬</span> #owo-commands
+            <span className="channel-icon"><PawIcon /></span> #owo-commands
           </div>
         </div>
 
         <div className="user-footer">
           <div className="user-profile">
-            <div className="avatar">U</div>
+            <div className="avatar">P</div>
             <div className="user-details">
               <span className="user-name">Player123</span>
               <span className="user-tag">Level {level}</span>
             </div>
           </div>
           <button 
-            style={{background: "none", border: "none", cursor: "pointer", fontSize: "0.8rem", color: "var(--ink-muted)"}}
+            style={{background: "none", border: "none", cursor: "pointer", display: "inline-flex", padding: "0.5rem", color: "#a81111"}}
             onClick={() => setShowGame(false)}
           >
-            🏠 Keluar
+            <HomeIcon />
           </button>
         </div>
       </div>
@@ -567,7 +649,7 @@ export default function App() {
       <div className="chat-area">
         <div className="panel-header">
           <span className="channel-icon">#</span>
-          {activeChannel === "owo-commands" ? "owo-commands" : activeChannel === "tutorial" ? "tutorial-dan-panduan" : "papan-peringkat"}
+          {activeChannel}
         </div>
 
         <div className="message-list">
@@ -588,7 +670,7 @@ export default function App() {
                       <div className="discord-embed">
                         {msg.embed.title && <div className="embed-title">{msg.embed.title}</div>}
                         {msg.embed.description && <div className="embed-desc">{msg.embed.description}</div>}
-                        <div className="embed-footer">OwO Engine v4.9 • {msg.time}</div>
+                        <div className="embed-footer">GLVS Engine v4.9 • {msg.time}</div>
                       </div>
                     )}
                   </div>
@@ -600,36 +682,34 @@ export default function App() {
 
           {activeChannel === "tutorial" && (
             <div style={{color: "var(--ink-regular)", padding: "1rem"}}>
-              <h2>📖 Cara Bermain OwO Simulator</h2>
+              <h2>Buku Panduan OwO Simulator</h2>
               <br />
-              <p>Simulasi ini meniru cara kerja bot Discord **OwO** secara persis. Berikut langkah-langkah memulainya:</p>
+              <p>Gunakan tombol aksi cepat di bawah untuk berburu atau bertarung secara praktis di ponsel pintar Anda:</p>
               <br />
               <ul>
-                <li>🤖 Ketik `/owo hunt` di kolom chat di bawah untuk berburu hewan. Setiap perburuan berdurasi cooldown 5 detik.</li>
-                <li>⚔️ Ketik `/owo battle` untuk bertarung dan mendapatkan hadiah koin & EXP yang lebih besar.</li>
-                <li>🎒 Ketik `/owo inv` untuk mengecek item, senjata, dan kotak box Anda.</li>
-                <li>🛒 Buka `/owo shop` untuk berbelanja senjata agar serangan Anda di battle semakin mematikan.</li>
-                <li>📦 Jika Anda memiliki **Crate** atau **Lootbox**, ketik `/owo open crate` atau `/owo open lootbox` untuk membukanya.</li>
+                <li>• Jalankan /owo hunt untuk mencari hewan liar.</li>
+                <li>• Jalankan /owo battle untuk bertarung dan menaikkan level.</li>
+                <li>• Belanjakan koin Cowoncy Anda di /owo shop untuk meningkatkan senjata.</li>
               </ul>
             </div>
           )}
 
           {activeChannel === "leaderboard" && (
             <div style={{color: "var(--ink-regular)", padding: "1rem"}}>
-              <h2>🏆 Papan Peringkat Global (Top Players)</h2>
+              <h2>Papan Peringkat Global</h2>
               <br />
               <div className="profile-stats" style={{maxWidth: "400px"}}>
-                <div className="stat-row" style={{borderBottom: "1px solid var(--border)", padding: "0.5rem 0"}}>
-                  <span>🥇 **1. owo_king**</span>
-                  <span>Lv. 92 (1,490,200 Cowoncy)</span>
+                <div className="stat-row" style={{borderBottom: "1px solid #330d0d", padding: "0.6rem 0"}}>
+                  <span>[1] owo_king</span>
+                  <span>Lv. 92 (1,490,200)</span>
                 </div>
-                <div className="stat-row" style={{borderBottom: "1px solid var(--border)", padding: "0.5rem 0"}}>
-                  <span>🥈 **2. gacha_lord**</span>
-                  <span>Lv. 78 (920,500 Cowoncy)</span>
+                <div className="stat-row" style={{borderBottom: "1px solid #330d0d", padding: "0.6rem 0"}}>
+                  <span>[2] gacha_lord</span>
+                  <span>Lv. 78 (920,500)</span>
                 </div>
-                <div className="stat-row" style={{borderBottom: "1px solid var(--border)", padding: "0.5rem 0"}}>
-                  <span>🥉 **3. Anda (Player123)**</span>
-                  <span>Lv. {level} ({cowoncy} Cowoncy)</span>
+                <div className="stat-row" style={{borderBottom: "1px solid #330d0d", padding: "0.6rem 0"}}>
+                  <span>[3] Anda (Player123)</span>
+                  <span>Lv. {level} ({cowoncy})</span>
                 </div>
               </div>
             </div>
@@ -638,28 +718,28 @@ export default function App() {
 
         {activeChannel === "owo-commands" && (
           <div className="input-area">
-            {/* Quick Actions Panel above Input */}
-            <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.8rem", flexWrap: "wrap" }}>
-              <button className="btn-secondary" style={{padding: "0.4rem 0.8rem", fontSize: "0.85rem"}} onClick={() => handleCommand("/owo hunt")}>
-                🐾 /owo hunt {cooldowns.hunt > 0 && `(${cooldowns.hunt}s)`}
+            {/* Quick Actions Panel designed not to overlap on phone screen */}
+            <div className="quick-action-bar">
+              <button className="btn-action-mobile" onClick={() => handleCommand("/owo hunt")}>
+                <PawIcon /> Hunt {cooldowns.hunt > 0 && `(${cooldowns.hunt}s)`}
               </button>
-              <button className="btn-secondary" style={{padding: "0.4rem 0.8rem", fontSize: "0.85rem"}} onClick={() => handleCommand("/owo battle")}>
-                ⚔️ /owo battle {cooldowns.battle > 0 && `(${cooldowns.battle}s)`}
+              <button className="btn-action-mobile" onClick={() => handleCommand("/owo battle")}>
+                <SwordsIcon /> Battle {cooldowns.battle > 0 && `(${cooldowns.battle}s)`}
               </button>
-              <button className="btn-secondary" style={{padding: "0.4rem 0.8rem", fontSize: "0.85rem"}} onClick={() => handleCommand("/owo inv")}>
-                🎒 /owo inv
+              <button className="btn-action-mobile" onClick={() => handleCommand("/owo inv")}>
+                <BagIcon /> Inv
               </button>
-              <button className="btn-secondary" style={{padding: "0.4rem 0.8rem", fontSize: "0.85rem"}} onClick={() => handleCommand("/owo zoo")}>
-                🦁 /owo zoo
+              <button className="btn-action-mobile" onClick={() => handleCommand("/owo zoo")}>
+                <PawIcon /> Zoo
               </button>
-              <button className="btn-secondary" style={{padding: "0.4rem 0.8rem", fontSize: "0.85rem"}} onClick={() => handleCommand("/owo shop")}>
-                🛒 /owo shop
+              <button className="btn-action-mobile" onClick={() => handleCommand("/owo shop")}>
+                <ShopIcon /> Shop
               </button>
-              <button className="btn-secondary" style={{padding: "0.4rem 0.8rem", fontSize: "0.85rem"}} onClick={() => handleCommand("/owo open crate")}>
-                📦 Buka Crate ({crates})
+              <button className="btn-action-mobile" onClick={() => handleCommand("/owo open crate")}>
+                <CrateIcon /> Crate ({crates})
               </button>
-              <button className="btn-secondary" style={{padding: "0.4rem 0.8rem", fontSize: "0.85rem"}} onClick={() => handleCommand("/owo open lootbox")}>
-                🎁 Buka Lootbox ({lootboxes})
+              <button className="btn-action-mobile" onClick={() => handleCommand("/owo open lootbox")}>
+                <LootboxIcon /> Box ({lootboxes})
               </button>
             </div>
 
@@ -671,19 +751,19 @@ export default function App() {
                 </div>
                 <div className="autocomplete-item" onClick={() => handleAutocompleteClick("/owo battle")}>
                   <span className="autocomplete-command">/owo battle</span>
-                  <span className="autocomplete-desc">Tarung melawan monster liar menggunakan senjata aktif</span>
+                  <span className="autocomplete-desc">Tarung melawan monster menggunakan senjata aktif</span>
                 </div>
                 <div className="autocomplete-item" onClick={() => handleAutocompleteClick("/owo inv")}>
                   <span className="autocomplete-command">/owo inv</span>
-                  <span className="autocomplete-desc">Lihat ransel, koin, peti, dan senjata yang dimiliki</span>
+                  <span className="autocomplete-desc">Lihat isi ransel dan koin Anda</span>
                 </div>
                 <div className="autocomplete-item" onClick={() => handleAutocompleteClick("/owo zoo")}>
                   <span className="autocomplete-command">/owo zoo</span>
-                  <span className="autocomplete-desc">Tampilkan koleksi hewan yang Anda tangkap</span>
+                  <span className="autocomplete-desc">Tampilkan seluruh hewan koleksi Anda</span>
                 </div>
                 <div className="autocomplete-item" onClick={() => handleAutocompleteClick("/owo shop")}>
                   <span className="autocomplete-command">/owo shop</span>
-                  <span className="autocomplete-desc">Buka toko senjata dan unboxing crates</span>
+                  <span className="autocomplete-desc">Membuka marketplace persenjataan</span>
                 </div>
               </div>
             )}
@@ -696,7 +776,7 @@ export default function App() {
                 value={inputText}
                 onChange={handleInputChange}
               />
-              <button type="submit" className="send-btn">➡️</button>
+              <button type="submit" className="send-btn"><ArrowRightIcon /></button>
             </form>
           </div>
         )}
@@ -704,7 +784,7 @@ export default function App() {
 
       {/* Column 3: Right Database & Profile Info Panel */}
       <div className="panel-right">
-        <div className="panel-right-title">📊 Status & Encyclopedia</div>
+        <div className="panel-right-title">Status & Ensiklopedia</div>
         
         {/* User Stats Section */}
         <div className="right-section">
@@ -728,15 +808,15 @@ export default function App() {
 
             <div className="stat-row" style={{marginTop: "0.5rem"}}>
               <span className="stat-lbl">Cowoncy:</span>
-              <span className="stat-val">🪙 {cowoncy}</span>
+              <span className="stat-val"><CoinsIcon /> {cowoncy}</span>
             </div>
             <div className="stat-row">
-              <span className="stat-lbl">Hewan Ditangkap:</span>
-              <span className="stat-val">🐾 {totalAnimalsCount} ekor</span>
+              <span className="stat-lbl">Koleksi Hewan:</span>
+              <span className="stat-val">{totalAnimalsCount} ekor</span>
             </div>
             <div className="stat-row">
               <span className="stat-lbl">Senjata Aktif:</span>
-              <span className="stat-val" style={{color: "var(--green)"}}>
+              <span className="stat-val" style={{color: "#32d74b"}}>
                 {inventory[activeWeaponIndex] ? inventory[activeWeaponIndex].name : "None"}
               </span>
             </div>
@@ -744,28 +824,18 @@ export default function App() {
         </div>
 
         {/* Wiki Tabs */}
-        <div style={{display: "flex", borderBottom: "1px solid var(--border)"}}>
+        <div style={{display: "flex", borderBottom: "1px solid #330d0d"}}>
           <button 
-            style={{
-              flex: 1, padding: "0.6rem", border: "none", cursor: "pointer",
-              background: activeWikiTab === "animals" ? "var(--bg-hover)" : "transparent",
-              color: activeWikiTab === "animals" ? "var(--ink-bright)" : "var(--ink-muted)",
-              fontWeight: 600
-            }}
+            className={`wiki-tab-btn ${activeWikiTab === "animals" ? "active" : ""}`}
             onClick={() => setActiveWikiTab("animals")}
           >
-            🦁 Hewan
+            Hewan
           </button>
           <button 
-            style={{
-              flex: 1, padding: "0.6rem", border: "none", cursor: "pointer",
-              background: activeWikiTab === "weapons" ? "var(--bg-hover)" : "transparent",
-              color: activeWikiTab === "weapons" ? "var(--ink-bright)" : "var(--ink-muted)",
-              fontWeight: 600
-            }}
+            className={`wiki-tab-btn ${activeWikiTab === "weapons" ? "active" : ""}`}
             onClick={() => setActiveWikiTab("weapons")}
           >
-            ⚔️ Senjata
+            Senjata
           </button>
         </div>
 
@@ -773,14 +843,11 @@ export default function App() {
         <div style={{padding: "1rem"}}>
           {activeWikiTab === "animals" && (
             <div className="wiki-list">
-              <div style={{fontSize: "0.75rem", color: "var(--ink-muted)", marginBottom: "0.5rem"}}>
-                Daftar semua hewan yang bisa ditangkap dari perburuan:
-              </div>
               {Object.keys(ANIMALS).map(rarity => 
                 ANIMALS[rarity].map(ani => (
                   <div className="wiki-item" key={ani.name}>
                     <span className="wiki-name">
-                      {ani.emoji} {ani.name}
+                      <PawIcon /> {ani.name}
                     </span>
                     <span className={`wiki-rarity rarity-${ani.rarity}`}>
                       {ani.rarity}
@@ -793,17 +860,14 @@ export default function App() {
 
           {activeWikiTab === "weapons" && (
             <div className="wiki-list">
-              <div style={{fontSize: "0.75rem", color: "var(--ink-muted)", marginBottom: "0.5rem"}}>
-                Gunakan koin di `/owo shop` untuk membeli senjata:
-              </div>
               {WEAPONS.map(w => (
                 <div className="wiki-item" key={w.id} style={{flexDirection: "column", alignItems: "flex-start", gap: "0.2rem"}}>
                   <div style={{display: "flex", justifyContent: "space-between", width: "100%"}}>
-                    <span className="wiki-name">⚔️ {w.name}</span>
+                    <span className="wiki-name"><SwordsIcon /> {w.name}</span>
                     <span className={`wiki-rarity rarity-${w.tier}`}>{w.tier}</span>
                   </div>
-                  <div style={{fontSize: "0.8rem", color: "var(--ink-muted)"}}>
-                    DMG: **{w.dmg}** | Price: **{w.price}** 🪙 | Durability: **{w.durability}**
+                  <div style={{fontSize: "0.8rem", color: "#c9b1b1"}}>
+                    DMG: {w.dmg} | Price: {w.price} | Durability: {w.durability}
                   </div>
                 </div>
               ))}
