@@ -2238,54 +2238,9 @@ export default function App() {
   };
 
   if (!showGame) {
-    return (
-      <div className="landing-container">
-
-
-        {!showAuth ? (
-          <>
-            <section className="landing-hero" style={{ animation: "fadeIn 1s ease-out" }}>
-              <div className="eyebrow" style={{ marginBottom: "1.5rem" }}>
-                Leanian Edition
-              </div>
-              <h1 className="landing-title" style={{ letterSpacing: "-0.01em", textTransform: "uppercase" }}>
-                Petualangan <span style={{ textShadow: "0 0 30px rgba(255, 59, 59, 0.4)" }}>OwO</span> dimulai dari satu klik.
-              </h1>
-              <p className="landing-subtitle" style={{ color: "#c9b1b1", maxWidth: "680px", margin: "1.5rem auto 2.5rem auto", fontSize: "1.05rem", lineHeight: "1.7" }}>
-                Glvsowogame membawamu ke dunia Leanian — RPG ringan berbasis browser dengan ratusan musuh, sistem hadiah harian, dan pertarungan yang makin seru tiap kamu naik level.
-              </p>
-              <div className="landing-buttons" style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
-                {currentUser ? (
-                  <button className="btn-primary" style={{ borderRadius: "12px", textTransform: "uppercase", letterSpacing: "0.05em", padding: "16px 30px" }} onClick={() => setShowGame(true)}>
-                    Mulai Bertarung ✦
-                  </button>
-                ) : (
-                  <button className="btn-primary" style={{ borderRadius: "12px", textTransform: "uppercase", letterSpacing: "0.05em", padding: "16px 30px" }} onClick={() => { setShowAuth(true); setAuthError(""); setAuthSuccess(""); }}>
-                    Masuk Ke Dunia Leanian <ArrowRightIcon />
-                  </button>
-                )}
-              </div>
-            </section>
-
-            <div className="landing-features" style={{ marginTop: "5rem" }}>
-              <div className="feature-card" style={{ border: "1px solid rgba(255, 59, 59, 0.15)", background: "rgba(12, 1, 1, 0.8)", borderRadius: "12px" }}>
-                <div className="feature-icon-wrapper" style={{ background: "rgba(255, 59, 59, 0.05)" }}><PawIcon /></div>
-                <h3 className="feature-title" style={{ fontFamily: "'Humane', sans-serif", fontSize: "2rem", color: "#ff3b3b", textTransform: "uppercase", margin: "0.5rem 0" }}>Ritual Perburuan</h3>
-                <p className="feature-desc" style={{ color: "#c9b1b1" }}>Jelajahi kegelapan rimba fantasi untuk mengoleksi puluhan makhluk mitologi purba berdasar persentase RNG orisinal.</p>
-              </div>
-              <div className="feature-card" style={{ border: "1px solid rgba(255, 59, 59, 0.15)", background: "rgba(12, 1, 1, 0.8)", borderRadius: "12px" }}>
-                <div className="feature-icon-wrapper" style={{ background: "rgba(255, 59, 59, 0.05)" }}><SwordsIcon /></div>
-                <h3 className="feature-title" style={{ fontFamily: "'Humane', sans-serif", fontSize: "2rem", color: "#ff3b3b", textTransform: "uppercase", margin: "0.5rem 0" }}>Pertempuran Jiwa</h3>
-                <p className="feature-desc" style={{ color: "#c9b1b1" }}>Uji kesaktian pedang aktif Anda. Berduel menghadapi monster purba dengan sistem kalkulasi level yang seimbang.</p>
-              </div>
-              <div className="feature-card" style={{ border: "1px solid rgba(255, 59, 59, 0.15)", background: "rgba(12, 1, 1, 0.8)", borderRadius: "12px" }}>
-                <div className="feature-icon-wrapper" style={{ background: "rgba(255, 59, 59, 0.05)" }}><ShopIcon /></div>
-                <h3 className="feature-title" style={{ fontFamily: "'Humane', sans-serif", fontSize: "2rem", color: "#ff3b3b", textTransform: "uppercase", margin: "0.5rem 0" }}>Pasar Gelap Kastil</h3>
-                <p className="feature-desc" style={{ color: "#c9b1b1" }}>Beli senjata magis legendaris, buka peti pusaka, dan kelola kekayaan Cowoncy Anda secara realtime.</p>
-              </div>
-            </div>
-          </>
-        ) : (
+    if (showAuth) {
+      return (
+        <div className="landing-container" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
           <div className="auth-panel gothic-login">
             {/* Warning Banner */}
             <div style={{ background: "rgba(255, 59, 58, 0.15)", border: "1px solid #ff453a", borderRadius: "10px", padding: "0.8rem", marginBottom: "1.2rem", fontSize: "0.8rem", color: "#ff453a", textAlign: "left", lineHeight: "1.4" }}>
@@ -2348,7 +2303,52 @@ export default function App() {
               </button>
             </form>
           </div>
-        )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="landing-container">
+        <section className="landing-hero" style={{ animation: "fadeIn 1s ease-out" }}>
+          <div className="eyebrow" style={{ marginBottom: "1.5rem" }}>
+            Leanian Edition
+          </div>
+          <h1 className="landing-title" style={{ letterSpacing: "-0.01em", textTransform: "uppercase" }}>
+            Petualangan <span style={{ textShadow: "0 0 30px rgba(255, 59, 59, 0.4)" }}>OwO</span> dimulai dari satu klik.
+          </h1>
+          <p className="landing-subtitle" style={{ color: "#c9b1b1", maxWidth: "680px", margin: "1.5rem auto 2.5rem auto", fontSize: "1.05rem", lineHeight: "1.7" }}>
+            Glvsowogame membawamu ke dunia Leanian — RPG ringan berbasis browser dengan ratusan musuh, sistem hadiah harian, dan pertarungan yang makin seru tiap kamu naik level.
+          </p>
+          <div className="landing-buttons" style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+            {currentUser ? (
+              <button className="btn-primary" style={{ borderRadius: "12px", textTransform: "uppercase", letterSpacing: "0.05em", padding: "16px 30px" }} onClick={() => setShowGame(true)}>
+                Mulai Bertarung ✦
+              </button>
+            ) : (
+              <button className="btn-primary" style={{ borderRadius: "12px", textTransform: "uppercase", letterSpacing: "0.05em", padding: "16px 30px" }} onClick={() => { setShowAuth(true); setAuthError(""); setAuthSuccess(""); }}>
+                Masuk Ke Dunia Leanian <ArrowRightIcon />
+              </button>
+            )}
+          </div>
+        </section>
+
+        <div className="landing-features" style={{ marginTop: "5rem" }}>
+          <div className="feature-card" style={{ border: "1px solid rgba(255, 59, 59, 0.15)", background: "rgba(12, 1, 1, 0.8)", borderRadius: "12px" }}>
+            <div className="feature-icon-wrapper" style={{ background: "rgba(255, 59, 59, 0.05)" }}><PawIcon /></div>
+            <h3 className="feature-title" style={{ fontFamily: "'Humane', sans-serif", fontSize: "2rem", color: "#ff3b3b", textTransform: "uppercase", margin: "0.5rem 0" }}>Ritual Perburuan</h3>
+            <p className="feature-desc" style={{ color: "#c9b1b1" }}>Jelajahi kegelapan rimba fantasi untuk mengoleksi puluhan makhluk mitologi purba berdasar persentase RNG orisinal.</p>
+          </div>
+          <div className="feature-card" style={{ border: "1px solid rgba(255, 59, 59, 0.15)", background: "rgba(12, 1, 1, 0.8)", borderRadius: "12px" }}>
+            <div className="feature-icon-wrapper" style={{ background: "rgba(255, 59, 59, 0.05)" }}><SwordsIcon /></div>
+            <h3 className="feature-title" style={{ fontFamily: "'Humane', sans-serif", fontSize: "2rem", color: "#ff3b3b", textTransform: "uppercase", margin: "0.5rem 0" }}>Pertempuran Jiwa</h3>
+            <p className="feature-desc" style={{ color: "#c9b1b1" }}>Uji kesaktian pedang aktif Anda. Berduel menghadapi monster purba dengan sistem kalkulasi level yang seimbang.</p>
+          </div>
+          <div className="feature-card" style={{ border: "1px solid rgba(255, 59, 59, 0.15)", background: "rgba(12, 1, 1, 0.8)", borderRadius: "12px" }}>
+            <div className="feature-icon-wrapper" style={{ background: "rgba(255, 59, 59, 0.05)" }}><ShopIcon /></div>
+            <h3 className="feature-title" style={{ fontFamily: "'Humane', sans-serif", fontSize: "2rem", color: "#ff3b3b", textTransform: "uppercase", margin: "0.5rem 0" }}>Pasar Gelap Kastil</h3>
+            <p className="feature-desc" style={{ color: "#c9b1b1" }}>Beli senjata magis legendaris, buka peti pusaka, dan kelola kekayaan Cowoncy Anda secara realtime.</p>
+          </div>
+        </div>
       </div>
     );
   }
