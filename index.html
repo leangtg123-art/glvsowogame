@@ -309,7 +309,7 @@
     <a href="#roster">Roster</a>
     <a href="#unduh">Unduh</a>
   </div>
-  <button class="nav-cta">Mainkan Sekarang</button>
+  <button class="nav-cta" onclick="window.triggerAuthOpen()">Mainkan Sekarang</button>
 </nav>
 
 <header class="hero">
@@ -318,7 +318,7 @@
     <h1>Petualangan <span class="accent">OwO</span> dimulai dari satu klik.</h1>
     <p class="hero-sub">Glvsowogame membawamu ke dunia Leanian — RPG ringan berbasis browser dengan ratusan musuh, sistem hadiah harian, dan pertarungan yang makin seru tiap kamu naik level.</p>
     <div class="hero-actions">
-      <button class="btn-primary">Mulai Bertarung ✦</button>
+      <button class="btn-primary" onclick="window.triggerAuthOpen()">Mulai Bertarung ✦</button>
       <button class="btn-ghost">▶ Lihat Trailer</button>
     </div>
     <div class="hero-stats">
@@ -427,7 +427,7 @@
     <h2>Siap masuk ke Leanian malam ini?</h2>
     <p>Gratis, tanpa instal, langsung dari browser kamu.</p>
     <div class="hero-actions">
-      <button class="btn-primary">Mainkan Glvsowogame ✦</button>
+      <button class="btn-primary" onclick="window.triggerAuthOpen()">Mainkan Glvsowogame ✦</button>
       <button class="btn-ghost">📖 Baca Panduan</button>
     </div>
   </div>
@@ -458,6 +458,20 @@
     s.style.width = s.style.height = (Math.random()*2+1.5)+'px';
     sf.appendChild(s);
   }
+</script>
+
+<script>
+  // global hooks to link static html buttons to react app state
+  window.triggerAuthOpen = function() {
+    if (window.__setReactShowAuth) {
+      window.__setReactShowAuth(true);
+    }
+  };
+  window.triggerGameOpen = function() {
+    if (window.__setReactShowGame) {
+      window.__setReactShowGame(true);
+    }
+  };
 </script>
 
 <div id="root"></div>

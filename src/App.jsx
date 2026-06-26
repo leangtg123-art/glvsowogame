@@ -293,6 +293,23 @@ export default function App() {
   // Navigation & Auth Mode
   const [showGame, setShowGame] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+
+  useEffect(() => {
+    window.__setReactShowAuth = (val) => {
+      setShowAuth(val);
+      if (val) {
+        // Scroll to auth panel immediately
+        setTimeout(() => {
+          const panel = document.querySelector(".auth-panel");
+          if (panel) {
+            panel.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 100);
+      }
+    };
+    window.__setReactShowGame = setShowGame;
+  }, []);
+
   const [authTab, setAuthTab] = useState("login");
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
