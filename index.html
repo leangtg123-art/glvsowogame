@@ -463,8 +463,21 @@
 <script>
   // global hooks to link static html buttons to react app state
   window.triggerAuthOpen = function() {
+    // Hide all static HTML landing page structure elements
+    const elementsToHide = document.querySelectorAll('nav, header, .marquee-wrap, section, footer');
+    elementsToHide.forEach(el => el.style.display = 'none');
+    
     if (window.__setReactShowAuth) {
       window.__setReactShowAuth(true);
+    }
+  };
+  window.triggerAuthClose = function() {
+    // Show all static HTML landing page structure elements again
+    const elementsToShow = document.querySelectorAll('nav, header, .marquee-wrap, section, footer');
+    elementsToShow.forEach(el => el.style.display = '');
+    
+    if (window.__setReactShowAuth) {
+      window.__setReactShowAuth(false);
     }
   };
   window.triggerGameOpen = function() {
