@@ -2240,8 +2240,24 @@ export default function App() {
 
   if (!showGame) {
     return (
-      <div className="landing-container" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
-        <div className="auth-panel gothic-login">
+      <div className="landing-container" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", paddingTop: "100px", paddingBottom: "40px" }}>
+        
+        {/* Navigation Bar matching index.html */}
+        <nav className="landing-nav">
+          <div className="logo" style={{ cursor: "pointer" }} onClick={() => window.location.href = 'index.html'}>
+            <div className="logo-orb"></div>
+            Glvso<span>wo</span>game
+          </div>
+          <div className="nav-links">
+            <a href="index.html#fitur">Fitur</a>
+            <a href="index.html#dunia">Dunia</a>
+            <a href="index.html#roster">Roster</a>
+            <a href="index.html#unduh">Unduh</a>
+          </div>
+          <button className="nav-cta" onClick={() => window.location.href = 'index.html'}>Kembali ke Beranda</button>
+        </nav>
+
+        <div className="auth-panel gothic-login" style={{ margin: "auto", position: "relative", zIndex: 10 }}>
           {/* Warning Banner */}
           <div style={{ background: "rgba(255, 59, 58, 0.15)", border: "1px solid #ff453a", borderRadius: "10px", padding: "0.8rem", marginBottom: "1.2rem", fontSize: "0.8rem", color: "#ff453a", textAlign: "left", lineHeight: "1.4" }}>
             <strong>⚠️ PERINGATAN KEAMANAN:</strong><br />
@@ -2277,6 +2293,7 @@ export default function App() {
                 placeholder="ID Username Anda..." 
                 value={usernameInput}
                 onChange={(e) => setUsernameInput(e.target.value)}
+                required
               />
             </div>
 
@@ -2288,6 +2305,7 @@ export default function App() {
                 placeholder="Kode Akses Rahasia..." 
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
+                required
               />
             </div>
 
