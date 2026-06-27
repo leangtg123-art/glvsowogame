@@ -1445,6 +1445,7 @@ export default function App() {
   const handleLogout = () => {
     setCurrentUser(null);
     setShowGame(false);
+    window.location.href = 'index.html';
   };
 
   const handleBuyItem = (item) => {
@@ -2297,16 +2298,12 @@ export default function App() {
               {authTab === "login" ? "KONEKSIKAN TERMINAL" : "DAFTAR ANGGOTA BARU"}
             </button>
 
-            <button 
+             <button 
               type="button" 
               className="btn-secondary auth-back-btn" 
               style={{ width: "100%", marginTop: "0.5rem" }} 
               onClick={() => {
-                if (window.triggerAuthClose) {
-                  window.triggerAuthClose();
-                } else {
-                  setShowAuth(false);
-                }
+                window.location.href = 'index.html';
               }}
             >
               KEMBALI KE BERANDA

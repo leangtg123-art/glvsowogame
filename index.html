@@ -461,34 +461,9 @@
 </script>
 
 <script>
-  // global hooks to link static html buttons to react app state
   window.triggerAuthOpen = function() {
-    if (window.__setReactShowAuth) {
-      window.__setReactShowAuth(true);
-    }
-    // Scroll down to the React app login container at the bottom
-    setTimeout(() => {
-      const rootEl = document.getElementById('root');
-      if (rootEl) {
-        rootEl.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 100);
-  };
-  window.triggerAuthClose = function() {
-    if (window.__setReactShowAuth) {
-      window.__setReactShowAuth(false);
-    }
-    // Scroll smoothly back to top of the page
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-  window.triggerGameOpen = function() {
-    if (window.__setReactShowGame) {
-      window.__setReactShowGame(true);
-    }
+    window.location.href = 'play.html';
   };
 </script>
-
-<div id="root"></div>
-<script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
