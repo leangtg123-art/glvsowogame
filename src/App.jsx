@@ -862,21 +862,41 @@ export default function App() {
         setBattlesCount(b => b + 1);
 
         const playerWeapon = inventory[activeWeaponIndex];
-        // Animal boost: higher levels and rarity give bigger boosts.
-        let animalBonusMultiplier = 1;
+        // Animal boost: base damage and scaling factor depending on rarity.
+        let baseAnimalDmg = 0;
+        let scalePerLevel = 0;
+
         if (equippedAnimal) {
           const r = equippedAnimal.rarity.toLowerCase();
-          if (r === "common") animalBonusMultiplier = 1.2;
-          else if (r === "uncommon") animalBonusMultiplier = 1.5;
-          else if (r === "rare") animalBonusMultiplier = 2.0;
-          else if (r === "epic") animalBonusMultiplier = 2.5;
-          else if (r === "mythic") animalBonusMultiplier = 3.5;
-          else if (r === "legendary") animalBonusMultiplier = 5.0;
+          if (r === "common") {
+            baseAnimalDmg = 2;
+            scalePerLevel = 0.5;
+          } else if (r === "uncommon") {
+            baseAnimalDmg = 5;
+            scalePerLevel = 1.0;
+          } else if (r === "rare") {
+            baseAnimalDmg = 12;
+            scalePerLevel = 2.5;
+          } else if (r === "epic") {
+            baseAnimalDmg = 30;
+            scalePerLevel = 6.0;
+          } else if (r === "mythic") {
+            baseAnimalDmg = 75;
+            scalePerLevel = 15.0;
+          } else if (r === "legendary") {
+            baseAnimalDmg = 180;
+            scalePerLevel = 40.0;
+          } else if (r === "special") {
+            baseAnimalDmg = 120;
+            scalePerLevel = 25.0;
+          }
         }
-        const animalLevelBonus = equippedAnimal ? (animalLevels[equippedAnimal.name] || 1) * 8 * animalBonusMultiplier : 0;
+
+        const animalLevel = equippedAnimal ? (animalLevels[equippedAnimal.name] || 1) : 1;
+        const animalLevelBonus = equippedAnimal ? baseAnimalDmg + (animalLevel - 1) * scalePerLevel : 0;
         
         const rawPower = playerWeapon ? playerWeapon.dmg : 5;
-        // Weapon power scaling: give higher-tier weapons a substantial multiplier boost for victories
+        // Total player power is the sum of active weapon damage and animal companion bonus.
         const playerPower = rawPower + animalLevelBonus;
         
         // Enemy scaling: challenge scales moderately, keeping it manageable
