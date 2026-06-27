@@ -463,22 +463,23 @@
 <script>
   // global hooks to link static html buttons to react app state
   window.triggerAuthOpen = function() {
-    // Hide all static HTML landing page structure elements
-    const elementsToHide = document.querySelectorAll('nav, header, .marquee-wrap, section, footer');
-    elementsToHide.forEach(el => el.style.display = 'none');
-    
     if (window.__setReactShowAuth) {
       window.__setReactShowAuth(true);
     }
+    // Scroll down to the React app login container at the bottom
+    setTimeout(() => {
+      const rootEl = document.getElementById('root');
+      if (rootEl) {
+        rootEl.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
   };
   window.triggerAuthClose = function() {
-    // Show all static HTML landing page structure elements again
-    const elementsToShow = document.querySelectorAll('nav, header, .marquee-wrap, section, footer');
-    elementsToShow.forEach(el => el.style.display = '');
-    
     if (window.__setReactShowAuth) {
       window.__setReactShowAuth(false);
     }
+    // Scroll smoothly back to top of the page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   window.triggerGameOpen = function() {
     if (window.__setReactShowGame) {
